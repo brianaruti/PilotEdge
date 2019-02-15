@@ -1,0 +1,158 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <script src="../../../../libraries/node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="../../../../libraries/node_modules/popper.js/dist/umd/popper.js"></script>
+
+  <script src="../../../../libraries/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+  
+  <link rel="stylesheet" href="../../../../globals/fox-bootstrap/fox-theme.css">
+ 
+  <link rel="stylesheet" href="../../../../globals/css/styles.css">
+  
+  <script src="js/index.js"></script>
+
+</head>
+
+<body>
+  <main>
+      <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Dropdown button
+          </button>
+          <div class="dropdown-menu" id="ghDropdown" aria-labelledby="dropdownMenuButton">
+           
+          </div>
+        </div>
+
+      <select >
+     
+        </select>
+
+    <!-- Input fields for the forms -->
+    <section>
+      <div class="form-group">
+        <label for="boardTitle">Board Title</label>
+        <input class="form-control countChars" id="boardTitle" placeholder="Enter Board Title" maxlength="">
+        <small id="titleCharCount" class="form-text text-muted"></small>
+      </div>
+      <div>
+        <label for="boardSubTitle">Board Subtitle</label>
+        <input class="form-control countChars" id="boardSubTitle" placeholder="Enter Board Subtitle" maxlength="">
+        <small id="titleCharCount" class="form-text text-muted"></small>
+      </div>
+    </section>
+
+    <!-- Radio Buttons -->
+    <section class="form-group">
+      <legend class="col-form-label">Choose the number of stocks you want to dispaly</legend>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices0" value="1stock" required>
+        <label class="form-check-label" for="stockChoices1">1</label>
+      </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices1" value="1stock">
+        <label class="form-check-label" for="stockChoices2">2</label>
+      </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices2" value="1stock">
+        <label class="form-check-label" for="stockChoices3">3</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices3" value="1stock">
+        <label class="form-check-label" for="stockChoices4">4</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices4" value="1stock">
+        <label class="form-check-label" for="stockChoices5">5</label>
+      </div>
+      </div>
+    </section> <!-- radio buttons -->
+
+
+
+    <!-- Stock Choices-->
+    <form class="stock-input" action="testForm.php" method="POST">
+      <div class="toggle reveal">
+        <div class="row">
+          <div class="col">
+            <input class="form-control" id="boardSymbol0" placeholder="Enter Stock Symbol"></input>
+          </div>
+          <div class="col">
+            <input class="form-control" id="boardTitle0" placeholder="Stock Name" readonly></input>
+          </div>
+        </div>
+        <!--row-->
+      </div><!-- reveal>-->
+      <div class="toggle reveal">
+        <div class="row">
+          <div class="col">
+            <input class="form-control" id="boardSymbol1" placeholder="Enter Stock Symbol"></input>
+          </div>
+          <div class="col">
+            <input class="form-control" id="boardTitle1" placeholder="Stock Name" readonly></input>
+          </div>
+        </div>
+        <!--row-->
+      </div><!-- reveal>-->
+      <div class="toggle reveal">
+        <div class="row">
+          <div class="col">
+            <input class="form-control" id="boardSymbol2" placeholder="Enter Stock Symbol"></input>
+          </div>
+          <div class="col">
+            <input class="form-control" id="boardTitle2" placeholder="Stock Name" readonly></input>
+          </div>
+        </div>
+        <!--row-->
+      </div><!-- reveal>-->
+      <div class="toggle reveal">
+        <div class="row">
+          <div class="col">
+            <input class="form-control" id="boardSymbol3" placeholder="Enter Stock Symbol"></input>
+          </div>
+          <div class="col">
+            <input class="form-control" id="boardTitle3" placeholder="Stock Name" readonly></input>
+          </div>
+        </div>
+        <!--row-->
+      </div><!-- reveal>-->
+      <div class="toggle reveal">
+        <div class="row">
+          <div class="col">
+            <input class="form-control" id="boardSymbol4" placeholder="Enter Stock Symbol"></input>
+          </div>
+          <div class="col">
+            <input class="form-control" id="boardTitle4" placeholder="Stock Name" readonly></input>
+          </div>
+        </div>
+        <!--row-->
+      </div><!-- reveal>-->
+      <input type="submit" name="formSubmit" value="Submit">
+
+    </form>
+
+    <h2>CSS Buttons</h2>
+
+    <!-- <button>Default Button</button>
+<a href="#" class="button">Link Button</a>
+<button class="button">Button</button>
+<input type="button" class="button" value="Input Button"> -->
+
+  </main>
+</body>
+
+
+
+
+
+</html>
