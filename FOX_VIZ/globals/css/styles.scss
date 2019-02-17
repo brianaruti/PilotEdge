@@ -13,6 +13,19 @@
     transform: scale(1);
     overflow: visible;
     transition: 0.5s; }
+
+    .input-empty{
+
+      background: #a02a2a;
+      border-width: 3px;
+      border-color: #e95b5b;
+     
+    }
+    .input-empty::placeholder{
+      color: #ffffff;
+    }
+
+   
   
 //   body {
 //     background: #987;

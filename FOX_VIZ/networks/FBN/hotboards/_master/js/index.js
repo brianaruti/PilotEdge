@@ -17,8 +17,9 @@ $(document).ready(function () {
     type: 'GET',
     dataType: "json",
     data:{
-      uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-      type: "IMAGE"
+     // uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+     uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+      type: "FONT"
     },
   
     url: "../../../../networks/FBN/hotboards/_master/php/testRestCall.php",
@@ -32,8 +33,8 @@ $(document).ready(function () {
     },
     error: function (xhr, ajaxOptions, thrownError) {
 
-      alert(xhr.status);
-      alert(thrownError);
+      // alert(xhr.status);
+      // alert(thrownError);
     }
   }); //end Ajax get rest
 
@@ -48,7 +49,16 @@ $(document).ready(function () {
   $('.form-check-input[name="stockChoices"]').change(function () {
     RadioButtonChanged(this);
   }); // End -- Radio Button
+
+  $('.alert').on("click", function(){
+
+    if($(this).attr("id") === "verifySymbols"){
+     VerifySymbols();
+    }
+  });
 }); //End -- Document ready function
+
+
 
 
 let helpers = {
@@ -118,4 +128,36 @@ function CharacterCounter(e) {
   }
 
   // alert(maxNumber);
+}
+
+function VerifySymbols(){
+  let counter = 0;
+  $('.form-check-input[name="stockChoices"]').each(function(){
+     if( $(this).is(':checked'))
+     {
+     //alert($(this).attr("id"));
+      
+      return false;
+     }
+   
+
+     counter ++;
+   
+  });
+
+  //Get the text for each
+  const el = document.querySelectorAll(".symbol-input");
+  for (let i = 0; i <= counter; i++) {
+    console.log('symbolInputs: ' + el[i].value);
+    
+    if(el[i].classList.contains('input-empty')){
+      el[i].classList.remove('input-empty');
+    };
+
+    if(el[i].value === ""){
+      el[i].classList.add('input-empty')
+      el[i].placeholder = "You must enter a symbol";
+    
+    };
+	}
 }

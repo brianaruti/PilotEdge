@@ -54,7 +54,7 @@
     <section class="form-group">
       <legend class="col-form-label">Choose the number of stocks you want to dispaly</legend>
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices0" value="1stock" required>
+        <input class="form-check-input" type="radio" name="stockChoices" id="stockChoices0" value="1stock">
         <label class="form-check-label" for="stockChoices1">1</label>
       </div>
       </div>
@@ -81,11 +81,11 @@
 
 
     <!-- Stock Choices-->
-    <form class="stock-input" action="testForm.php" method="POST">
+    <form class="stock-input needs-validation" novalidate>
       <div class="toggle reveal">
         <div class="row">
           <div class="col">
-            <input class="form-control" id="boardSymbol0" placeholder="Enter Stock Symbol"></input>
+            <input class="form-control symbol-input" id="boardSymbol0" placeholder="Enter Stock Symbol"></input>
           </div>
           <div class="col">
             <input class="form-control" id="boardTitle0" placeholder="Stock Name" readonly></input>
@@ -96,7 +96,7 @@
       <div class="toggle reveal">
         <div class="row">
           <div class="col">
-            <input class="form-control" id="boardSymbol1" placeholder="Enter Stock Symbol"></input>
+            <input class="form-control symbol-input" id="boardSymbol1" placeholder="Enter Stock Symbol"></input>
           </div>
           <div class="col">
             <input class="form-control" id="boardTitle1" placeholder="Stock Name" readonly></input>
@@ -107,7 +107,7 @@
       <div class="toggle reveal">
         <div class="row">
           <div class="col">
-            <input class="form-control" id="boardSymbol2" placeholder="Enter Stock Symbol"></input>
+            <input class="form-control symbol-input" id="boardSymbol2" placeholder="Enter Stock Symbol"></input>
           </div>
           <div class="col">
             <input class="form-control" id="boardTitle2" placeholder="Stock Name" readonly></input>
@@ -118,7 +118,7 @@
       <div class="toggle reveal">
         <div class="row">
           <div class="col">
-            <input class="form-control" id="boardSymbol3" placeholder="Enter Stock Symbol"></input>
+            <input class="form-control symbol-input" id="boardSymbol3" placeholder="Enter Stock Symbol"></input>
           </div>
           <div class="col">
             <input class="form-control" id="boardTitle3" placeholder="Stock Name" readonly></input>
@@ -129,7 +129,7 @@
       <div class="toggle reveal">
         <div class="row">
           <div class="col">
-            <input class="form-control" id="boardSymbol4" placeholder="Enter Stock Symbol"></input>
+            <input class="form-control symbol-input" id="boardSymbol4" placeholder="Enter Stock Symbol"></input>
           </div>
           <div class="col">
             <input class="form-control" id="boardTitle4" placeholder="Stock Name" readonly></input>
@@ -137,7 +137,7 @@
         </div>
         <!--row-->
       </div><!-- reveal>-->
-      <input type="submit" name="formSubmit" value="Submit">
+      <button type="button" id="verifySymbols" class="alert">Verify Symbols</button>
 
     </form>
 

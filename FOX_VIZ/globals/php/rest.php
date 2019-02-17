@@ -1,8 +1,8 @@
 <?php
 
-//require '../../../libraries/vendor/autoload.php';
+require '../vendor/autoload.php';
+//require_once(__DIR__ . '../vendor/php-console/php-console/src/PhpConsole/__autoload.php');
 
-require 'D:\xampp\htdocs\FOX_VIZ\Libraries\vendor\autoload.php';
 
 
 
@@ -10,15 +10,6 @@ use GuzzleHttp\Client;
 
 define("USERNAME", "Admin");
 define("PASSWORD", "VizDb");
-
-$uuid = '';
-$type = '';
-$tmp ='';
-
-// echo '<script>console.log(' . $_GET['uuid'] .')</script>';
-// echo '<script>console.log(' . $_GET['type'] .')</script>';
-
-
 
 class VizGHRest
 {
@@ -32,7 +23,7 @@ class VizGHRest
     public function __construct()
     {
         $this->http = $client = new Client([
-            // 'base_uri' => "http://10.232.13.221:19398/",
+
             'base_uri' => "http://localhost:19398/",
         ]);
     }
@@ -55,7 +46,13 @@ class VizGHRest
 
     }
 
-    public function ParseResponse($response)
+/**
+ * Pare the response from the server
+ *
+ * @param [type] $response
+ * @return void
+ */
+    private function ParseResponse($response)
     {
 
         $xml = new SimpleXMLElement($response->getBody());
@@ -64,30 +61,43 @@ class VizGHRest
                                             //https://www.electrictoolbox.com/php-simplexml-element-attributes/
             if ((string) $entry->category->attributes()->term === $this->ghType) {
 
-                //instead of returning the simpleXMlElement in an array i pulled the strings'
+               //instead of returning the simpleXMlElement in an array i pulled the strings'
                //not sure if this matters but it is less data sent back to the ajax success function
                 $tmp[] = array(
                     $this->FixUuid($entry->id),
                     (string)$entry->title,
                 );
               // echo (json_encode('id: ' . $entry->id  . ' title: ' . $entry->title) ."<br /> <br />");
+               
             }
+           
         }
 
        $this->response = json_encode($tmp);
     }
 
-    private function FixUuid($uuid){
-
-        $id = explode(":", $uuid);
-        return '<' . $id[2] . '>';
-    }
-
+/**
+ * Returns the response
+ *
+ * @return string
+ */
     public function GetResponse()
 
     {
         return $this->response;
 
     }
-}
+/**
+ * Creates a viz friendly string for the uuid
+ *
+ * @param [type] $uuid
+ * @return void
+ */
+    private function FixUuid($uuid){
 
+        $id = explode(":", $uuid);
+        return '<' . $id[2] . '>';
+    }
+
+    
+}

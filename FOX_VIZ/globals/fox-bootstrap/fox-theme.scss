@@ -5,8 +5,12 @@ $input-focus-bg: #f7f0f0;
 $input-color: #0fa5d3;
 $input-bg: #969494;
 $input-placeholder-color: #333333;
+$input-border-width: 2px;
+$input-border-color:    #333333;
 
 
 
-@import "../node_modules/bootstrap/scss/bootstrap"
+
+@import "../../Libraries/node_modules/bootstrap/scss/bootstrap.scss"
+
 
