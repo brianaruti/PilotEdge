@@ -21,10 +21,44 @@
       border-color: #e95b5b;
      
     }
+
+    // body{
+     
+    //   background-color: #595c5f;
+    // }
+
+    
+
+    .custom-element {
+      color: color-yiq(#000); // returns `color: #fff`
+    }
+
+
+
+
     .input-empty::placeholder{
       color: #ffffff;
     }
 
+    input[type="radio"]:before {
+      position: absolute;
+      margin-left: -5px;
+      margin-top: -3px;
+      width: 20px;
+      height: 20px;
+      content: '';
+      background-image: radial-gradient(circle, #595c5f 8px, #1e2226 9px, #1e2226 9px, #2d353a 10px);
+      background-repeat: no-repeat;
+      background-position: left;
+      background-size: 20px; }
+
+      input[type="radio"]:checked:before {
+        background-image: radial-gradient(circle, #65686b 3px, #82bee6 5px, #82bee6 8px, #2d353a 9px); }
+
+    // .dropdown-menu {
+
+    //   border-radius: 30px;
+    // }
    
   
 //   body {
