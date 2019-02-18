@@ -32,8 +32,8 @@ class VizGHRest
     public function __construct()
     {
         $this->http = $client = new Client([
-            // 'base_uri' => "http://10.232.13.221:19398/",
-            'base_uri' => "http://localhost:19398/",
+             'base_uri' => "http://10.232.13.221:19398/",
+            //'base_uri' => "http://localhost:19398/",
         ]);
     }
 /**

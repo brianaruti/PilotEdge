@@ -4,10 +4,31 @@ const characterCountDict = {
   boardSubTitle: 30
 };
 
+
+function vizFieldChanged(returnValue){
+
+
+  var fieldVal = $(returnValue).val();
+  var id = $(returnValue).attr("id");
+ // var fieldId = $(returnValue).attr('id');
+
+  console.log(fieldVal);
+
+
+}
+
+
+
 //Document has loaded
 $(document).ready(function () {
-  // vizrt.payloadhosting.setFieldValueCallbacks(createCallbacks());
-  //vizrt.payloadhosting.initialize();
+
+
+  let pl = vizrt.payloadhosting;
+  pl.initialize();
+  vizrt.payloadhosting.initialize();
+
+  //pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
+  
 
 
   //Ajax request to populate the dropdown with GH response
@@ -17,8 +38,8 @@ $(document).ready(function () {
     type: 'GET',
     dataType: "json",
     data:{
-     // uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-     uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+      uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+     //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
       type: "FONT"
     },
   
@@ -38,6 +59,24 @@ $(document).ready(function () {
     }
   }); //end Ajax get rest
 
+
+  //Event handler for viz fields
+  $(".symbol-input").on("keyup", function(){
+   
+   // let id = $(this).attr("id");
+    let vizFieldName = $(this).attr("id").split("_");
+    let name = vizFieldName[1];
+    
+    //creat and object that can be passed to viz with the value of name and not the  [] computed property
+    let obj ={
+      [name]:vizFieldChanged($(this))
+    }
+
+    pl.setFieldValueCallbacks(obj);
+    
+    
+
+  });
   //Event handler on key up
   //////////////////////////////////////////////////////////////
   $(".countChars").on("keyup", function () {
