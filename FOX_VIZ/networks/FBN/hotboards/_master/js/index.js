@@ -5,21 +5,19 @@ const characterCountDict = {
 };
 
 
-function vizFieldChanged(returnValue){
+function vizFieldChanged(returnValue) {
 
 
   var fieldVal = $(returnValue).val();
   var id = $(returnValue).attr("id");
- // var fieldId = $(returnValue).attr('id');
+  // var fieldId = $(returnValue).attr('id');
 
   console.log(fieldVal);
-
-
 }
 
-
-
-//Document has loaded
+/**
+ * Document loaded function
+ */
 $(document).ready(function () {
 
 
@@ -28,21 +26,20 @@ $(document).ready(function () {
   vizrt.payloadhosting.initialize();
 
   //pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
-  
 
-
-  //Ajax request to populate the dropdown with GH response
-  //////////////////////////////////////////////////////////////
+/**
+ * Ajax request to populate the dropdown with GH response on load
+ */
   let response = '';
   $.ajax({
     type: 'GET',
     dataType: "json",
-    data:{
+    data: {
       uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-     //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+      //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
       type: "FONT"
     },
-  
+
     url: "../../../../networks/FBN/hotboards/_master/php/testRestCall.php",
     success: function (data) {
 
@@ -61,66 +58,60 @@ $(document).ready(function () {
 
 
   //Event handler for viz fields
-  $(".symbol-input").on("keyup", function(){
-   
-   // let id = $(this).attr("id");
+  //////////////////////////////////////////////////////////////
+  $(".symbol-input").on("keyup", function () {
+
+    // let id = $(this).attr("id");
     let vizFieldName = $(this).attr("id").split("_");
     let name = vizFieldName[1];
-    
+
     //creat and object that can be passed to viz with the value of name and not the  [] computed property
-    let obj ={
-      [name]:vizFieldChanged($(this))
+    let obj = {
+      [name]: vizFieldChanged($(this))
     }
 
     pl.setFieldValueCallbacks(obj);
-    
-    
 
+
+  })
+
+/**
+ * handler for stocksymbols
+ */
+  $(".symbol-input").on("input", function () {
+    StockInputDisplay($(this));
   });
-  //Event handler on key up
-  //////////////////////////////////////////////////////////////
+
+/**
+ * handler on key up to count characters
+ */
   $(".countChars").on("keyup", function () {
     $(this).css("background-color", "lightblue");
     CharacterCounter(this);
-  }); //end key up
+  });
 
-  //event handler radio buttons
-  $('.form-check-input[name="stockChoices"]').change(function () {
+/**
+ * handler radio buttons
+ */
+  $('[name="stockChoices"]').change(function () {
     RadioButtonChanged(this);
-  }); // End -- Radio Button
+  });
 
-  $('.alert').on("click", function(){
+/**
+ * handler for submit button
+ */  
+  $('.alert').on("click", function () {
 
-    if($(this).attr("id") === "verifySymbols"){
-     VerifySymbols();
+    if ($(this).attr("id") === "verifySymbols") {
+      VerifySymbols();
     }
   });
 }); //End -- Document ready function
 
 
-
-
-let helpers = {
-  buildDropdown: function (result, dropdown, emptyMessage) {
-    // Remove current options
-    dropdown.html('');
-    // Add the empty option with the empty message and disable and hide it so it doesnt appear as a choice
-    dropdown.append('<option selected disabled hidden>' + emptyMessage + '</option>');
-
-    // Check result isnt empty
-    if (result != '') {
-      // Loop through each of the results and append the option to the dropdown
-      $.each(result, function (k, v) {
-        //dropdown.append('<option value="' + v[0] + '">' + v[1] + '</option>');
-        dropdown.append('<button class=dropdown-item value="' + v[0] + '">' + v[1] + '</button>');
-      });
-    }
-  }
-
-}; //end helpers
-
-//Radio button on Change event
-//////////////////////////////////////////////////////////////
+/**
+ * Radio button on Change event
+ */  
 function RadioButtonChanged(e) {
   let idValue = $(e).attr("id");
 
@@ -135,11 +126,12 @@ function RadioButtonChanged(e) {
       $(obj).attr('class', "toggle hide");
     }
   });
-} //end radioButtonChanged
+}
 
 
-//Function to set characters remaining, gets the element from the keyup event
-//////////////////////////////////////////////////////////////
+/**
+ * Function to set characters remaining, gets the element from the keyup event
+ */ 
 function CharacterCounter(e) {
   let maxNum = characterCountDict[e.id]; //get max character count
 
@@ -169,34 +161,84 @@ function CharacterCounter(e) {
   // alert(maxNumber);
 }
 
-function VerifySymbols(){
-  let counter = 0;
-  $('.form-check-input[name="stockChoices"]').each(function(){
-     if( $(this).is(':checked'))
-     {
-     //alert($(this).attr("id"));
-      
-      return false;
-     }
-   
+/**
+ * Function to verify symbols
+ */  
+function VerifySymbols() {
 
-     counter ++;
-   
+  let counter = 0;
+
+  //get the number of the radial button checked
+  $('.form-check-input[name="stockChoices"]').each(function () {
+    return $(this).is(':checked') ? false : counter++;
   });
 
-  //Get the text for each
-  const el = document.querySelectorAll(".symbol-input");
-  for (let i = 0; i <= counter; i++) {
-    console.log('symbolInputs: ' + el[i].value);
-    
-    if(el[i].classList.contains('input-empty')){
-      el[i].classList.remove('input-empty');
-    };
+  //loop through the number of selected inputs
+  $(".symbol-input").each(function (i) {
 
-    if(el[i].value === ""){
-      el[i].classList.add('input-empty')
-      el[i].placeholder = "You must enter a symbol";
-    
-    };
-	}
+    if (i <= counter) {
+
+      objHelpers.removeIf($(this), 'input-empty'); //rmeove the input empty class if there is one, then check and add them back if needed
+
+      if ($(this).val() === "") {
+
+        $(this).addClass('input-empty');
+      }
+    }
+    else {
+      return false;
+    }
+  });
 }
+
+/**
+ * Controls the appearance of the stock input fields
+ */  
+function StockInputDisplay(e)
+{
+  $(e).css("background-color", "lightblue");
+
+  objHelpers.removeIf($(e),'input-empty')
+
+  if ($(e).val() === "") {
+    $(e).removeAttr("style");
+    $(e).addClass('input-empty');
+  }
+
+}
+
+/**
+ * Helpers for common tasks with jquery objs
+ */
+let objHelpers = {
+
+  removeIf: function (obj, className) {
+
+    if ($(obj).hasClass(className)) {
+
+      $(obj).removeClass(className);
+    };
+  }
+};
+
+/**
+ * dropDown helper functions
+ */  
+let helpers = {
+  buildDropdown: function (result, dropdown, emptyMessage) {
+    // Remove current options
+    dropdown.html('');
+    // Add the empty option with the empty message and disable and hide it so it doesnt appear as a choice
+    dropdown.append('<option selected disabled hidden>' + emptyMessage + '</option>');
+
+    // Check result isnt empty
+    if (result != '') {
+      // Loop through each of the results and append the option to the dropdown
+      $.each(result, function (k, v) {
+        //dropdown.append('<option value="' + v[0] + '">' + v[1] + '</option>');
+        dropdown.append('<button class=dropdown-item value="' + v[0] + '">' + v[1] + '</button>');
+      });
+    }
+  }
+
+}; //end helpers
