@@ -35,8 +35,8 @@ $(document).ready(function () {
     type: 'GET',
     dataType: "json",
     data: {
-      uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-      //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+      //uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+      uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
       type: "FONT"
     },
 
@@ -128,7 +128,6 @@ function RadioButtonChanged(e) {
   });
 }
 
-
 /**
  * Function to set characters remaining, gets the element from the keyup event
  */ 
@@ -204,7 +203,6 @@ function StockInputDisplay(e)
     $(e).removeAttr("style");
     $(e).addClass('input-empty');
   }
-
 }
 
 /**

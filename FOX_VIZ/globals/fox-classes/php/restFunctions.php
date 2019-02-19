@@ -32,8 +32,8 @@ class VizGHRest
     public function __construct()
     {
         $this->http = $client = new Client([
-             'base_uri' => "http://10.232.13.221:19398/",
-            //'base_uri' => "http://localhost:19398/",
+             //'base_uri' => "http://10.232.13.221:19398/",
+            'base_uri' => "http://localhost:19398/",
         ]);
     }
 /**
@@ -59,22 +59,30 @@ class VizGHRest
     {
 
         $xml = new SimpleXMLElement($response->getBody());
-
+   
         foreach ($xml->entry as $entry) {
                                             //https://www.electrictoolbox.com/php-simplexml-element-attributes/
             if ((string) $entry->category->attributes()->term === $this->ghType) {
 
                 //instead of returning the simpleXMlElement in an array i pulled the strings'
                //not sure if this matters but it is less data sent back to the ajax success function
-                $tmp[] = array(
-                    $this->FixUuid($entry->id),
-                    (string)$entry->title,
-                );
+                // $tmp[] = array(
+                //     $this->FixUuid($entry->id),
+                //     (string)$entry->title,
+                // );
+             
+                $title = $entry->{'title'}->__toString();
+                $uuid = $entry->{'id'}->__toString();
+                
+               $array[$uuid]=$title;
+
+                // );
               // echo (json_encode('id: ' . $entry->id  . ' title: ' . $entry->title) ."<br /> <br />");
             }
         }
-
-       $this->response = json_encode($tmp);
+        natcasesort($array);  //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
+       $this->response = json_encode($array);
+       echo "<script>console.log({$this->response})</script>";
     }
 
     private function FixUuid($uuid){
@@ -86,6 +94,7 @@ class VizGHRest
     public function GetResponse()
 
     {
+       
         return $this->response;
 
     }
