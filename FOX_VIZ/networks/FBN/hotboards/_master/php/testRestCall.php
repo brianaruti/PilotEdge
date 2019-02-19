@@ -1,6 +1,7 @@
 <?php
 
 include '../../../../../globals/fox-classes/php/restFunctions.php';
+
 $uuid;
 $type;
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -19,11 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     };
 
     $request = new VizGHRest;
-
+    
     $request->GetRequest($uuid,$type);
-
-    echo($request->GetResponse());
+  
+    echo($request->GetResponse()); //send back to ajax
 }
+
+
+  
 
 
 

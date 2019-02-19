@@ -2,7 +2,8 @@
 
 //require '../../../libraries/vendor/autoload.php';
 
-require 'D:\xampp\htdocs\FOX_VIZ\Libraries\vendor\autoload.php';
+require 'c:\xampp\htdocs\FOX_VIZ\Libraries\vendor\autoload.php';
+//include 'C:\xampp\htdocs\FOX_VIZ\libraries\vendor\php-console\php-console\chromephp-master\ChromePhp.php';
 
 
 
@@ -32,8 +33,8 @@ class VizGHRest
     public function __construct()
     {
         $this->http = $client = new Client([
-             //'base_uri' => "http://10.232.13.221:19398/",
-            'base_uri' => "http://localhost:19398/",
+             'base_uri' => "http://10.232.13.221/",
+            //'base_uri' => "http://localhost:19398/",
         ]);
     }
 /**
@@ -77,12 +78,12 @@ class VizGHRest
                $array[$uuid]=$title;
 
                 // );
-              // echo (json_encode('id: ' . $entry->id  . ' title: ' . $entry->title) ."<br /> <br />");
+               //echo (json_encode('id: ' . $entry->id  . ' title: ' . $entry->title) ."<br /> <br />");
             }
         }
         natcasesort($array);  //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
        $this->response = json_encode($array);
-       echo "<script>console.log({$this->response})</script>";
+
     }
 
     private function FixUuid($uuid){
@@ -93,7 +94,8 @@ class VizGHRest
 
     public function GetResponse()
 
-    {
+    { 
+       
        
         return $this->response;
 

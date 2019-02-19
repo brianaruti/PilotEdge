@@ -20,13 +20,13 @@ function vizFieldChanged(returnValue) {
  */
 $(document).ready(function () {
 
-
+  
   let pl = vizrt.payloadhosting;
   pl.initialize();
   vizrt.payloadhosting.initialize();
 
   //pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
-
+ 
 /**
  * Ajax request to populate the dropdown with GH response on load
  */
@@ -35,24 +35,27 @@ $(document).ready(function () {
     type: 'GET',
     dataType: "json",
     data: {
-      //uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-      uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+      uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+      //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
       type: "FONT"
     },
 
     url: "../../../../networks/FBN/hotboards/_master/php/testRestCall.php",
     success: function (data) {
-
+     // alert(response);
       helpers.buildDropdown(
         data,
         $('#ghDropdown'),
         'Select your geom'
       );
+
+      console.log(data);;
     },
     error: function (xhr, ajaxOptions, thrownError) {
-
-      // alert(xhr.status);
-      // alert(thrownError);
+      console.log(data);
+      
+    //   alert(xhr);
+    //   alert(xhr.status);
     }
   }); //end Ajax get rest
 
@@ -74,6 +77,14 @@ $(document).ready(function () {
 
 
   })
+
+ 
+  $( ".dropdown-menu" ).on( "click", "button", function( event ) {
+    event.preventDefault();
+    console.log( $( this ).text() );
+});
+
+  
 
 /**
  * handler for stocksymbols
@@ -105,6 +116,8 @@ $(document).ready(function () {
     if ($(this).attr("id") === "verifySymbols") {
       VerifySymbols();
     }
+
+  
   });
 }); //End -- Document ready function
 
@@ -224,17 +237,16 @@ let objHelpers = {
  */  
 let helpers = {
   buildDropdown: function (result, dropdown, emptyMessage) {
-    // Remove current options
-    dropdown.html('');
-    // Add the empty option with the empty message and disable and hide it so it doesnt appear as a choice
-    dropdown.append('<option selected disabled hidden>' + emptyMessage + '</option>');
 
-    // Check result isnt empty
+    let menu = $(dropdown).find('.dropdown-menu');
+
+    menu.html(''); //clear before adding
+
     if (result != '') {
       // Loop through each of the results and append the option to the dropdown
-      $.each(result, function (k, v) {
+      $.each(result, function (index, value) {
         //dropdown.append('<option value="' + v[0] + '">' + v[1] + '</option>');
-        dropdown.append('<button class=dropdown-item value="' + v[0] + '">' + v[1] + '</button>');
+        menu.append('<button class=dropdown-item value="' + index + '">' + value + '</button>');
       });
     }
   }
