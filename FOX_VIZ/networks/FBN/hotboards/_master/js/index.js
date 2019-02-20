@@ -35,8 +35,8 @@ $(document).ready(function () {
     type: 'GET',
     dataType: "json",
     data: {
-      uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-      //uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+     // uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+      uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
       type: "FONT"
     },
 
@@ -52,10 +52,10 @@ $(document).ready(function () {
       console.log(data);;
     },
     error: function (xhr, ajaxOptions, thrownError) {
-      console.log(data);
+     // console.log(data);
       
-    //   alert(xhr);
-    //   alert(xhr.status);
+       alert(xhr);
+       alert(xhr.status);
     }
   }); //end Ajax get rest
 
@@ -78,10 +78,18 @@ $(document).ready(function () {
 
   })
 
- 
+ /**
+  * Event delegation - click event for dynamically created elements
+  * handler for drop down buttons created via rest call
+  */
   $( ".dropdown-menu" ).on( "click", "button", function( event ) {
     event.preventDefault();
-    console.log( $( this ).text() );
+ 
+    let menu  = $(this).closest('#ghDropdown').find('#dropdownMenuButton');
+    $(menu).text($(this).text()) ;
+
+     // console.log( $( this ).text() );
+    // console.log($(tst).text());
 });
 
   
