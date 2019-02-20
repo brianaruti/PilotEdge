@@ -4,6 +4,7 @@ const characterCountDict = {
   boardSubTitle: 30
 };
 
+let isVerified = false; //global var to track the stock verification button
 
 function vizFieldChanged(returnValue) {
 
@@ -15,49 +16,93 @@ function vizFieldChanged(returnValue) {
   console.log(fieldVal);
 }
 
+var AjaxHandler = {
+
+  Request: function (method, url, dataType, data, callback) {
+    $.ajax({
+      type: method,
+      dataType: dataType,
+      data: 
+        data,
+      url: url,
+      success: callback(data),
+      error: function (xhr, ajaxOptions, thrownError) {
+        // alert(xhr);
+        //     alert(xhr.status);
+      }
+    }); //end Ajax get rest
+  }
+}
 /**
  * Document loaded function
  */
+let response;
+let method = 'GET';
+let url = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
+let dataType = "json";
+let data= jQuery.param({uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2", type: "FONT"});
+
+// data = JSON.stringify(data);
+// data.replace("{","").replace("}","");
+// console.log(data.replace("{","").replace("}",""););
+
+
+//data = JSON.stringify(data);
+
+function successHandler(response){
+  if(response.type == "Success"){
+    alert(response);
+  }
+}
+
 $(document).ready(function () {
 
-  
+
+
+
+AjaxHandler.Request(method,url,dataType,data,successHandler);
+
+
+
+
   let pl = vizrt.payloadhosting;
   pl.initialize();
   vizrt.payloadhosting.initialize();
 
   //pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
- 
-/**
- * Ajax request to populate the dropdown with GH response on load
- */
-  let response = '';
-  $.ajax({
-    type: 'GET',
-    dataType: "json",
-    data: {
-     // uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
-      uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
-      type: "FONT"
-    },
 
-    url: "../../../../networks/FBN/hotboards/_master/php/testRestCall.php",
-    success: function (data) {
-     // alert(response);
-      helpers.buildDropdown(
-        data,
-        $('#ghDropdown'),
-        'Select your geom'
-      );
 
-      console.log(data);;
-    },
-    error: function (xhr, ajaxOptions, thrownError) {
-     // console.log(data);
-      
-       alert(xhr);
-       alert(xhr.status);
-    }
-  }); //end Ajax get rest
+  /**
+   * Ajax request to populate the dropdown with GH response on load
+   */
+  // let response = '';
+  // $.ajax({
+  //   type: 'GET',
+  //   dataType: "json",
+  //   data: {
+  //     // uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35",
+  //     uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2",
+  //     type: "FONT"
+  //   },
+
+  //   url: "../../../../networks/FBN/hotboards/_master/php/testRestCall.php",
+  //   success: function (data) {
+  //     // alert(response);
+  //     helpers.buildDropdown(
+  //       data,
+  //       $('#ghDropdown'),
+  //       'Select your geom'
+  //     );
+
+  //     console.log(data);;
+  //   },
+  //   error: function (xhr, ajaxOptions, thrownError) {
+  //     // console.log(data);
+
+  //     alert(xhr);
+  //     alert(xhr.status);
+  //   }
+  // }); //end Ajax get rest
 
 
   //Event handler for viz fields
@@ -78,61 +123,61 @@ $(document).ready(function () {
 
   })
 
- /**
-  * Event delegation - click event for dynamically created elements
-  * handler for drop down buttons created via rest call
-  */
-  $( ".dropdown-menu" ).on( "click", "button", function( event ) {
+  /**
+   * Event delegation - click event for dynamically created elements
+   * handler for drop down buttons created via rest call
+   */
+  $(".dropdown-menu").on("click", "button", function (event) {
     event.preventDefault();
- 
-    let menu  = $(this).closest('#ghDropdown').find('#dropdownMenuButton');
-    $(menu).text($(this).text()) ;
 
-     // console.log( $( this ).text() );
+    let menu = $(this).closest('#ghDropdown').find('#dropdownMenuButton');
+    $(menu).text($(this).text());
+
+    // console.log( $( this ).text() );
     // console.log($(tst).text());
-});
+  });
 
-  
 
-/**
- * handler for stocksymbols
- */
+
+  /**
+   * handler for stocksymbols
+   */
   $(".symbol-input").on("input", function () {
     StockInputDisplay($(this));
   });
 
-/**
- * handler on key up to count characters
- */
+  /**
+   * handler on key up to count characters
+   */
   $(".countChars").on("keyup", function () {
     $(this).css("background-color", "lightblue");
     CharacterCounter(this);
   });
 
-/**
- * handler radio buttons
- */
+  /**
+   * handler radio buttons
+   */
   $('[name="stockChoices"]').change(function () {
     RadioButtonChanged(this);
   });
 
-/**
- * handler for submit button
- */  
+  /**
+   * handler for submit button
+   */
   $('.alert').on("click", function () {
 
     if ($(this).attr("id") === "verifySymbols") {
       VerifySymbols();
     }
 
-  
+
   });
 }); //End -- Document ready function
 
 
 /**
  * Radio button on Change event
- */  
+ */
 function RadioButtonChanged(e) {
   let idValue = $(e).attr("id");
 
@@ -151,7 +196,7 @@ function RadioButtonChanged(e) {
 
 /**
  * Function to set characters remaining, gets the element from the keyup event
- */ 
+ */
 function CharacterCounter(e) {
   let maxNum = characterCountDict[e.id]; //get max character count
 
@@ -183,7 +228,7 @@ function CharacterCounter(e) {
 
 /**
  * Function to verify symbols
- */  
+ */
 function VerifySymbols() {
 
   let counter = 0;
@@ -209,21 +254,24 @@ function VerifySymbols() {
       return false;
     }
   });
+
+  $isVerified = true;
 }
 
 /**
  * Controls the appearance of the stock input fields
- */  
-function StockInputDisplay(e)
-{
+ */
+function StockInputDisplay(e) {
   $(e).css("background-color", "lightblue");
 
-  objHelpers.removeIf($(e),'input-empty')
+  objHelpers.removeIf($(e), 'input-empty')
 
   if ($(e).val() === "") {
     $(e).removeAttr("style");
     $(e).addClass('input-empty');
   }
+
+  $isVerified = false; //set to false on any typing
 }
 
 /**
@@ -242,7 +290,7 @@ let objHelpers = {
 
 /**
  * dropDown helper functions
- */  
+ */
 let helpers = {
   buildDropdown: function (result, dropdown, emptyMessage) {
 

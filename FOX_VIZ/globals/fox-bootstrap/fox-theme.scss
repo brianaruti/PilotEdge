@@ -22,14 +22,22 @@ $input-focus-bg: #969494;
 
 
 body {
-
     padding: 5;
 }
 
+// btn {
+//     padding: 14px 24px;
+//     border: 10px #ffffff;
+//     font-weight: 700;
+//     letter-spacing: 1px;
+//     text-transform: uppercase;
+// }
+
+
+@import "../../Libraries/node_modules/bootstrap/scss/bootstrap.scss";
 
 
 
 
-@import "../../Libraries/node_modules/bootstrap/scss/bootstrap.scss"
 
 

@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 define("USERNAME", "Admin");
 define("PASSWORD", "VizDb");
 
+
 $uuid = '';
 $type = '';
 $tmp = '';
@@ -96,7 +97,7 @@ class VizGHRest
         $id = explode(":", $uuid);
 
         $uuid = '<' . $id[2] . '>';
-        
+
         return $uuid;
     }
 
