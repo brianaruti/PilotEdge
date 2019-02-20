@@ -1,9 +1,8 @@
 <?php
 
-//require '../../../libraries/vendor/autoload.php';
-
-require 'D:\xampp\htdocs\FOX_VIZ\Libraries\vendor\autoload.php';
-//include 'C:\xampp\htdocs\FOX_VIZ\libraries\vendor\php-console\php-console\chromephp-master\ChromePhp.php';
+require ($_SERVER["DOCUMENT_ROOT"] . '/FOX_VIZ/Libraries/vendor/autoload.php');
+//useful link regaridng php include paths and how relative paths do not work
+//http://yagudaev.com/posts/resolving-php-relative-path-problem/
 
 use GuzzleHttp\Client;
 
