@@ -5,6 +5,9 @@ require ($_SERVER["DOCUMENT_ROOT"] . '/FOX_VIZ/Libraries/vendor/autoload.php');
 //http://yagudaev.com/posts/resolving-php-relative-path-problem/
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Exception\ClientException;
 
 define("USERNAME", "Admin");
 define("PASSWORD", "VizDb");
@@ -14,40 +17,90 @@ $uuid = '';
 $type = '';
 $tmp = '';
 
+
+$request;
+
+$client;
+
 // echo '<script>console.log(' . $_GET['uuid'] .')</script>';
 // echo '<script>console.log(' . $_GET['type'] .')</script>';
 
 class VizGHRest
 {
-    private $http;
-    private $ghType;
     private $response;
+    private $urlEndpoints;
+    private $params;
+    private $client;
 
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct($urlEndpoints,$params)
     {
-        $this->http = $client = new Client([
-            // 'base_uri' => "http://10.232.13.221/",
-            'base_uri' => "http://localhost:19398/",
+       this->$urlEndpoints = $urlEndpoints;
+       this->$params = $params;
+
+       CreateGetRequest();
+    }
+
+    /**
+     * Create an instance of the client
+     *
+     * @param [type] $url
+     * @return void
+     */
+    public function InitClient($url){
+
+        //create a client
+        thsi->$client = new Client([
+            'base_uri' => url,
+            'timeout'  => 2.0,
         ]);
     }
-/**
- * Make a Get Request to the GH
- *
- * @return void
- */
-    public function GetRequest($uuid, $ghType)
+
+    public function CreateGetRequest()
     {
-        $this->ghType = $ghType;
 
-        $response = $this->http->request('GET', 'files/' . $uuid . '/', [
+        $req = $this->$client->createRequest('GET', $params['type'] . '/'. $params['uuid'] . '/', [
             'auth' => [USERNAME, PASSWORD],
-        ]);
+        ]);     
+    }
 
-        if ($response->getStatusCode() === 200) {
+    private function CreateClientBkup()
+    {
+        $this->InitClient($url[1]); //If the first request fails then try the backup
+
+        SendRequest();
+  
+    }
+
+    public function SendRequest()
+    {
+        try {
+    
+            $response = $this->client->send($req); //send the response  
+  
+          } catch (RequestException $e){
+  
+
+          }
+
+          
+          CreateClientBkup();
+        
+    }
+
+    // $this->GetStatus($response->getStatusCode());
+       
+
+    public function GetStatus($status)
+    {
+        if (status === 200) {
             $this->ParseResponse($response);
+        }
+        else{
+
+            return false;
         }
 
     }
