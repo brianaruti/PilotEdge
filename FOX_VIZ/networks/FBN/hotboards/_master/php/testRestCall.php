@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     //check to see the endpoint is set to know what client to create and with the correct parameters
     if( isset($_GET['endpoint']) && $_GET['endpoint'] != ""){
 
+        $endPoint = $_GET['endpoint'];
         switch ($endPoint) {
 
         case 'ghHub':
@@ -44,14 +45,21 @@ function SendRestGH()
                 $params['type'] = $_GET['type'];
             }
         };
+
+    $endpoint = $params['type'] . '/'. $params['uuid'] . '/';
+        
+    //Create a client for the primary endpoint
+    $client = new VizRest($GLOBALS['primaryGH'],'GET',$params);
+    $req = $client->MakeRequest();
     
-    $ghArray = array("primary"=>$primaryGH, "backup"=>$backupGH);
+    
+    // $ghArray = array("primary"=>$primaryGH, "backup"=>$backupGH);
 
-    //create a new instance of the class and pass in both primary and backup endpoints to it.
-    $request = new VizGHRest($ghArray,$params);
+    // //create a new instance of the class and pass in both primary and backup endpoints to it.
+    // $request = new VizGHRest($ghArray,$params);
 
-    //create a client with the primaary endpoint
-    $request->InitClient($primaryGH);
+    // //create a client with the primaary endpoint
+    // $request->InitClient($primaryGH);
 
 
 };
@@ -76,18 +84,18 @@ function SendRestGH()
 
 
     
-    if($request->GetRequest($uuid,$type) == false){
+//     if($request->GetRequest($uuid,$type) == false){
 
 
-    }
+//     }
 
-    if(!$request->GetStatus()){
+//     if(!$request->GetStatus()){
 
-        echo ('here');
-    }
+//         echo ('here');
+//     }
   
-    echo($request->GetResponse()); //send back to ajax
-}
+//     echo($request->GetResponse()); //send back to ajax
+// }
 
 
   

@@ -8,39 +8,35 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Psr7\Request;
+
 
 define("USERNAME", "Admin");
 define("PASSWORD", "VizDb");
 
-
-$uuid = '';
-$type = '';
-$tmp = '';
-
-
-$request;
-
-$client;
-
-// echo '<script>console.log(' . $_GET['uuid'] .')</script>';
-// echo '<script>console.log(' . $_GET['type'] .')</script>';
-
-class VizGHRest
+class VizRest
 {
     private $response;
-    private $urlEndpoints;
+    public $endpoint;
     private $params;
     private $client;
+
+    private $method;
+    private $contentType;
+    private $postData;
+    private $postType;
+
 
     /**
      * Constructor
      */
-    public function __construct($urlEndpoints,$params)
+    public function __construct($endpoint,$method,$queryParams='',$postData='',$contentType='')
     {
-       this->$urlEndpoints = $urlEndpoints;
-       this->$params = $params;
-
-       CreateGetRequest();
+       $this->endpoint = $endpoint;
+       $this->method = $method;
+       $this->postData = $postData;
+       $this->contentType = $contentType;
+       $this->params= $queryParams;
     }
 
     /**
@@ -49,21 +45,42 @@ class VizGHRest
      * @param [type] $url
      * @return void
      */
-    public function InitClient($url){
-
-        //create a client
-        thsi->$client = new Client([
-            'base_uri' => url,
-            'timeout'  => 2.0,
-        ]);
+    public function InitClient($url,$endpoint){
+   
+     
+    
     }
 
-    public function CreateGetRequest()
+    public function MakeRequest()
     {
+        //create a client
+        $this->client = new Client([
+            'base_uri' => $this->endpoint,
+            'timeout'  => 2.0,
+            'auth' => [USERNAME,PASSWORD]
+        ]);
 
-        $req = $this->$client->createRequest('GET', $params['type'] . '/'. $params['uuid'] . '/', [
-            'auth' => [USERNAME, PASSWORD],
-        ]);     
+        $uri = new Uri();
+
+        $request = new Request;
+
+        public static function withQueryValue(UriInterface $uri, $key, $value)
+        {
+            $result = self::getFilteredQueryString($uri, [$key]);
+            $result[] = self::generateQueryString($key, $value);
+            return $uri->withQuery(implode('&', $result));
+        }
+
+    //     $request = $this->client->get($this->params);
+    //  //   $response = $this->client->MakeRequest($this->method, $this->params);
+      
+    //     // $req = new Request($this->method,$this->client->base_uri);    
+    //     //$request = $this->client->get('/query');
+
+    //     // $request = $this->client->get('/user');
+    //     // echo $request->getUrl();
+    //     echo ('test');
+    //     //$req = $this->client->send();
     }
 
     private function CreateClientBkup()

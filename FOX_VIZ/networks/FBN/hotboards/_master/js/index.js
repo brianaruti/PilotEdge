@@ -3,26 +3,8 @@ const characterCountDict = {
   boardTitle: 50,
   boardSubTitle: 30
 };
-let DebugMode = "home";
 
 let isVerified = false; //global var to track the stock verification button
-
-let endpoint = '';
-let uuid = '';
-
-/**
- * set variables for dev testing with different graphics hubs
- */
-if (DebugMode == 'home') {
-  endpoint = "http://localhost:19398/";
-  uuid = '0B1B3157-B520-41A8-923B-E68D8905C94F';
-
-} else {
-
-  endpoint = "http://10.232.13.221/";
-  uuid = '5D65A5EC-55A8-4BEB-B85B-C019345BC0C2'
-};
-
 
 function vizFieldChanged(returnValue) {
 
@@ -33,41 +15,18 @@ function vizFieldChanged(returnValue) {
 
   console.log(fieldVal);
 }
-
-//best way to create an object description
-//https://stackoverflow.com/questions/6843951/which-way-is-best-for-creating-an-object-in-javascript-is-var-necessary-befor
-//Singleton javascript object
+let response ='';
 var AjaxHandler = {
 
-  method: '',
-  url: '',
-  dataType: '',
-  customParam: '',
-
-  formatData: function (data) {
-    jQuery.param(data);
-  },
-
-  Request: function (callback) {
+  GetRequest: function (method, url, dataType, data, callback) {
     $.ajax({
       type: method,
       dataType: dataType,
-      data: data,
+      data: 
+        data,
       url: url,
-      success: function (data, status, jqXHR) {
-        //callback(server_response);
-        console.log(data);
-        console.log(status);
-        console.log(jqXHR);
-        console.log(AjaxHandler.customParam);
-
-
-        
-       // alert(response);
-      },
+      success: callback(response),
       error: function (xhr, ajaxOptions, thrownError) {
-
-        
         // alert(xhr);
         //     alert(xhr.status);
       }
@@ -77,33 +36,31 @@ var AjaxHandler = {
 /**
  * Document loaded function
  */
-
-
-
-let response = '';
+//let response;
 let method = 'GET';
 let url = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
 let dataType = "json";
+let data= jQuery.param({uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35", type: "FONT", endpoint: "ghHub"});
 
-let data = jQuery.param({ uuid: uuid, type: "FONT", endpoint: endpoint });
+// data = JSON.stringify(data);
+// data.replace("{","").replace("}","");
+// console.log(data.replace("{","").replace("}",""););
 
-function successHandler(data, status, id) {
 
-//console.log(response);
-  if (response.type == "Success") {
+//data = JSON.stringify(data);
+
+function successHandler(response){
+  if(response.type == "Success"){
     alert(response);
   }
 }
 
 $(document).ready(function () {
 
-  AjaxHandler.method = 'GET';
-  AjaxHandler.endpoint = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
-  AjaxHandler.dataType = 'json';
-  AjaxHandler.data = { uuid: uuid, type: "FONT", endpoint: endpoint };
-  AjaxHandler.customParam ="myPram";
-  // AjaxHandler.endpoint="test";
-  AjaxHandler.Request(successHandler);
+
+
+
+AjaxHandler.GetRequest(method,url,dataType,data,successHandler);
 
 
 
