@@ -49,7 +49,7 @@ class VizRest
     
         $response = $this->client->send($req);
 
-        echo($response->getBody());
+       // echo($response->getBody());
     
        // if (status === 200) {
          return   $this->ParseResponse($response);
@@ -115,14 +115,17 @@ class VizRest
 
             if ((string) $entry->category->attributes()->term === $this->filter) {
 
-                $tmp[] = array(
-                    $this->FixUuid($entry->id),
-                    (string)$entry->title);
+                $title = $entry->{'title'}->__toString();
+                $uuid = $entry->{'id'}->__toString();
+
+                $this->FixUuid($uuid);
+                //creates an associative array
+                $array[$uuid] = $title;
             }
         }
 
-        natcasesort($tmp); //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
-       
+        natcasesort($array); //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
+      // echo ($array);
        return $this->response = json_encode($array);
 
     }

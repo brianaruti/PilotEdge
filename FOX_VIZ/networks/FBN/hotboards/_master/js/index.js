@@ -18,15 +18,22 @@ function vizFieldChanged(returnValue) {
 let response ='';
 var AjaxHandler = {
 
-  GetRequest: function (method, url, dataType, data, callback) {
+  GetRequest: function (method, url, dataType, param, callback) {
     $.ajax({
       type: method,
       dataType: dataType,
       data: 
-        data,
+      param,
       url: url,
       success: function(data){
-       alert(response);
+       // callback(data);
+       //alert("THIS IS SUCCES" + response);
+
+       helpers.buildDropdown(
+              data,
+              $('#ghDropdown'),
+              'Select your geom'
+            );
       },
       error: function (xhr, ajaxOptions, thrownError) {
          alert(xhr);
@@ -42,7 +49,7 @@ var AjaxHandler = {
 let method = 'GET';
 let url = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
 let dataType = "JSON";
-let data= jQuery.param({uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35", type: "FONT", endpoint: "ghHub"});
+let param = jQuery.param({uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35", type: "FONT", endpoint: "ghHub"});
 
 // data = JSON.stringify(data);
 // data.replace("{","").replace("}","");
@@ -62,7 +69,7 @@ $(document).ready(function () {
 
 
 
-AjaxHandler.GetRequest(method,url,dataType,data,successHandler);
+AjaxHandler.GetRequest(method,url,dataType,param,successHandler);
 
 
 

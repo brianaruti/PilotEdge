@@ -53,7 +53,9 @@ function SendRestGH()
     $response = $client->MakeRequest('GET','files/' .$params['uuid'],'IMAGE' );
     
     if($response){
+
         echo($response);
+//var_dump ('<pre>' . $response ,'<pre>');
 
     }
   
