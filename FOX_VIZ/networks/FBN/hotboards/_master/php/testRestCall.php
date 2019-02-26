@@ -49,10 +49,13 @@ function SendRestGH()
   //  $endpoint = $params['type'] . '/'. $params['uuid'] . '/';
         
     //Create a client for the primary endpoint
-    $client = new VizRest();
-    $client->InitClient($GLOBALS['backupGH'] , $params);
+    $client = new VizRest($GLOBALS['backupGH']);
+    $response = $client->MakeRequest('GET','files/' .$params['uuid'],'IMAGE' );
     
-    
+    if($response){
+        echo($response);
+
+    }
   
 };
 

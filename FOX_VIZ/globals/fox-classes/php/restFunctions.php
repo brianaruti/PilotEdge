@@ -18,7 +18,8 @@ class VizRest
 {
     // private $response;
     // public $endpoint;
-    // private $params;
+     private $params;
+     private $filter;
     // private $client;
 
     // private $method;
@@ -30,63 +31,33 @@ class VizRest
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct($endpoint)
     {
-    //    $this->endpoint = $endpoint;
-    //    $this->method = $method;
-    //    $this->postData = $postData;
-    //    $this->contentType = $contentType;
-    //    $this->params= $queryParams;
-    }
-
-    /**
-     * Create an instance of the client
-     *
-     * @param [type] $url
-     * @return void
-     */
-    public function InitClient($endpoint,$params){
-   
         //create a client
         $this->client = new Client([
-        'base_uri' => $endpoint  ,
-        'timeout'  => 7.0,
-        'auth' => [USERNAME,PASSWORD],
-    ]);
-    
-    $req = new Request('GET', 'files/' . $params['uuid']);
-   
-    $response = $this->client->send($req);
-
-echo($response->getBody());
-   
-    
+            'base_uri' => $endpoint  ,
+            'timeout'  => 7.0,
+            'auth' => [USERNAME,PASSWORD],
+        ]);
     }
 
-    public function MakeRequest()
+
+    public function MakeRequest($method, $endpoint,$filter)
     {
-        
-        // $uri = new Uri();
+        $this->filter = $filter;
+        $req = new Request($method, $endpoint);
+    
+        $response = $this->client->send($req);
 
-        // $request = new Request;
+        echo($response->getBody());
+    
+       // if (status === 200) {
+         return   $this->ParseResponse($response);
+       // }
+       // else{
 
-        // public static function withQueryValue(UriInterface $uri, $key, $value)
-        // {
-        //     $result = self::getFilteredQueryString($uri, [$key]);
-        //     $result[] = self::generateQueryString($key, $value);
-        //     return $uri->withQuery(implode('&', $result));
-        // }
-
-    //     $request = $this->client->get($this->params);
-    //  //   $response = $this->client->MakeRequest($this->method, $this->params);
-      
-    //     // $req = new Request($this->method,$this->client->base_uri);    
-    //     //$request = $this->client->get('/query');
-
-    //     // $request = $this->client->get('/user');
-    //     // echo $request->getUrl();
-    //     echo ('test');
-    //     //$req = $this->client->send();
+           // return false;
+       // }
     }
 
     private function CreateClientBkup()
@@ -142,7 +113,7 @@ echo($response->getBody());
             
             //https://www.electrictoolbox.com/php-simplexml-element-attributes/
 
-            if ((string) $entry->category->attributes()->term === $this->ghType) {
+            if ((string) $entry->category->attributes()->term === $this->filter) {
 
                 //set the object vakues to strings
                 $title = $entry->{'title'}->__toString();
@@ -156,7 +127,7 @@ echo($response->getBody());
 
         natcasesort($array); //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
        
-        $this->response = json_encode($array);
+       return $this->response = json_encode($array);
 
     }
 

@@ -25,10 +25,12 @@ var AjaxHandler = {
       data: 
         data,
       url: url,
-      success: callback(response),
+      success: function(data){
+       alert(response);
+      },
       error: function (xhr, ajaxOptions, thrownError) {
-        // alert(xhr);
-        //     alert(xhr.status);
+         alert(xhr);
+            alert(xhr.status);
       }
     }); //end Ajax get rest
   }
@@ -39,7 +41,7 @@ var AjaxHandler = {
 //let response;
 let method = 'GET';
 let url = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
-let dataType = "json";
+let dataType = "JSON";
 let data= jQuery.param({uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2", type: "FONT", endpoint: "ghHub"});
 
 // data = JSON.stringify(data);
