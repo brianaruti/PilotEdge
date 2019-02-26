@@ -16,27 +16,27 @@ define("PASSWORD", "VizDb");
 
 class VizRest
 {
-    private $response;
-    public $endpoint;
-    private $params;
-    private $client;
+    // private $response;
+    // public $endpoint;
+    // private $params;
+    // private $client;
 
-    private $method;
-    private $contentType;
-    private $postData;
-    private $postType;
+    // private $method;
+    // private $contentType;
+    // private $postData;
+    // private $postType;
 
 
     /**
      * Constructor
      */
-    public function __construct($endpoint,$method,$queryParams='',$postData='',$contentType='')
+    public function __construct()
     {
-       $this->endpoint = $endpoint;
-       $this->method = $method;
-       $this->postData = $postData;
-       $this->contentType = $contentType;
-       $this->params= $queryParams;
+    //    $this->endpoint = $endpoint;
+    //    $this->method = $method;
+    //    $this->postData = $postData;
+    //    $this->contentType = $contentType;
+    //    $this->params= $queryParams;
     }
 
     /**
@@ -45,31 +45,37 @@ class VizRest
      * @param [type] $url
      * @return void
      */
-    public function InitClient($url,$endpoint){
+    public function InitClient($endpoint,$params){
    
-     
+        //create a client
+        $this->client = new Client([
+        'base_uri' => $endpoint  ,
+        'timeout'  => 7.0,
+        'auth' => [USERNAME,PASSWORD],
+    ]);
+    
+    $req = new Request('GET', 'files/' . $params['uuid']);
+   
+    $response = $this->client->send($req);
+
+echo($response->getBody());
+   
     
     }
 
     public function MakeRequest()
     {
-        //create a client
-        $this->client = new Client([
-            'base_uri' => $this->endpoint,
-            'timeout'  => 2.0,
-            'auth' => [USERNAME,PASSWORD]
-        ]);
+        
+        // $uri = new Uri();
 
-        $uri = new Uri();
+        // $request = new Request;
 
-        $request = new Request;
-
-        public static function withQueryValue(UriInterface $uri, $key, $value)
-        {
-            $result = self::getFilteredQueryString($uri, [$key]);
-            $result[] = self::generateQueryString($key, $value);
-            return $uri->withQuery(implode('&', $result));
-        }
+        // public static function withQueryValue(UriInterface $uri, $key, $value)
+        // {
+        //     $result = self::getFilteredQueryString($uri, [$key]);
+        //     $result[] = self::generateQueryString($key, $value);
+        //     return $uri->withQuery(implode('&', $result));
+        // }
 
     //     $request = $this->client->get($this->params);
     //  //   $response = $this->client->MakeRequest($this->method, $this->params);
