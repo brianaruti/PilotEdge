@@ -42,7 +42,7 @@ var AjaxHandler = {
 let method = 'GET';
 let url = '../../../../networks/FBN/hotboards/_master/php/testRestCall.php';
 let dataType = "JSON";
-let data= jQuery.param({uuid: "5D65A5EC-55A8-4BEB-B85B-C019345BC0C2", type: "FONT", endpoint: "ghHub"});
+let data= jQuery.param({uuid: "3de61c10-b03a-445d-ab50-99f5bb63cb35", type: "FONT", endpoint: "ghHub"});
 
 // data = JSON.stringify(data);
 // data.replace("{","").replace("}","");

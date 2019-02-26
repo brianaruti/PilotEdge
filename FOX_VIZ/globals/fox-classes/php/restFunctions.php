@@ -115,22 +115,17 @@ class VizRest
 
             if ((string) $entry->category->attributes()->term === $this->filter) {
 
-                //set the object vakues to strings
-                $title = $entry->{'title'}->__toString();
-                $uuid = $entry->{'id'}->__toString();
-
-                $this->FixUuid($uuid);
-                //creates an associative array
-                $array[$uuid] = $title;
+                $tmp[] = array(
+                    $this->FixUuid($entry->id),
+                    (string)$entry->title);
             }
         }
 
-        natcasesort($array); //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
+        natcasesort($tmp); //this does a case insensitive sort on the array as as opposed to asort() which takes case into consideration
        
        return $this->response = json_encode($array);
 
     }
-
     /**
      * Gets rid of the urn wording returned from viz
      *
