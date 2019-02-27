@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Exception\BadResponseException;
 
 
 define("USERNAME", "Admin");
@@ -46,18 +47,22 @@ class VizRest
     {
         $this->filter = $filter;
         $req = new Request($method, $endpoint);
-    
+        $response;
+        try{
         $response = $this->client->send($req);
+        }
+        catch(Exception $e){
 
-       // echo($response->getBody());
-    
-       // if (status === 200) {
-         return   $this->ParseResponse($response);
-       // }
-       // else{
+            $statuscode = $e->getStatusCode();
 
-           // return false;
-       // }
+            if ($e->hasResponse()) {
+                $exception = (string) $e->getResponse()->getBody();
+                $exception = json_decode($exception);
+                return new JsonResponse($exception, $e->getCode());
+              } else {
+                //return new JsonResponse($e->getMessage(), 503);
+              }
+            }
     }
 
     private function CreateClientBkup()
