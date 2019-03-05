@@ -78,7 +78,7 @@ AjaxHandler.GetRequest(method,url,dataType,param,successHandler);
   pl.initialize();
   vizrt.payloadhosting.initialize();
 
-  //pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
+  pl.setFieldValueCallbacks({ "stock1": vizFieldChanged, "stock2": vizFieldChanged });
 
 
   /**
@@ -121,15 +121,6 @@ AjaxHandler.GetRequest(method,url,dataType,param,successHandler);
     // let id = $(this).attr("id");
     let vizFieldName = $(this).attr("id").split("_");
     let name = vizFieldName[1];
-
-    //creat and object that can be passed to viz with the value of name and not the  [] computed property
-    let obj = {
-      [name]: vizFieldChanged($(this))
-    }
-
-    pl.setFieldValueCallbacks(obj);
-
-
   })
 
   /**
