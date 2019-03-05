@@ -124,7 +124,7 @@ AjaxHandler.GetRequest(method,url,dataType,param,successHandler);
 
     //creat and object that can be passed to viz with the value of name and not the  [] computed property
     let obj = {
-      [name]: vizFieldChanged($(this))
+      [name]: vizFieldChanged
     }
 
     pl.setFieldValueCallbacks(obj);
