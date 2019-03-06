@@ -1,0 +1,21 @@
+{
+  "name": "fox-viz-libraries",
+  "version": "0.0.0",
+  "description": "3rd party libraries used by FOX's custom HTML templates for Pilot Edge.",
+  "main": "index.js",
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "jquery": "^3.3.1",
+    "popper": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": " "
+  },
+  "repository": {
+    "type": "git",
+    "url": " "
+  },
+  "author": "",
+  "license": "UNLICENSED"
+}

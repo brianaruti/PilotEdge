@@ -4,7 +4,7 @@
 ###Ignore Folders ###
 
 FOX_CONCEPTS/
-libraries/
+libraries/node_modules/
 FOX_VIZ_OLD/
 
 
