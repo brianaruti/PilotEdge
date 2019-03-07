@@ -1,5 +1,6 @@
+"use strict";
 /*
-Copyright (c) 2017 Vizrt
+Copyright (c) 2018 Vizrt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +52,10 @@ var vizrt;
 (function (vizrt) {
     var vizNs = "http://www.vizrt.com/types";
     var atomNs = "http://www.w3.org/2005/Atom";
+    var bgfxNs = "http://www.vizrt.com/2011/bgfx";
     var mrssNs = "http://search.yahoo.com/mrss/";
+    var vizmediaNs = "http://www.vizrt.com/opensearch/mediatype";
+    var safeTypes = "|image/jpeg|image/png|image/gif|image/bmp|image/svg+xml|";
     function createEvent(type) {
         var event = document.createEvent("Event");
         event.initEvent(type, false, false);
@@ -101,6 +105,14 @@ var vizrt;
         }
         return result;
     }
+    function isLikelyToBeURL(str) {
+        var lowerCased = str.toLowerCase();
+        return startsWith(lowerCased, "http://") || startsWith(lowerCased, "https://");
+    }
+    function getSafeVizImageUrl(contentEl) {
+        var value = text(contentEl);
+        return value && isLikelyToBeURL(value) ? value : null;
+    }
     function getTextFromFieldElement(fieldElement) {
         var valueElement = getFirstChildElement(fieldElement, vizNs, "value");
         return valueElement != null ? text(valueElement) : null;
@@ -117,6 +129,16 @@ var vizrt;
     function getFieldValueXmlAsString(fieldElement) {
         var element = getXmlFromFieldElement(fieldElement);
         return !element ? null : (new XMLSerializer).serializeToString(element);
+    }
+    function getAttributeInt(el, name) {
+        var attr = el.getAttribute(name);
+        var num = attr != null ? parseInt(attr) : NaN;
+        return isNaN(num) ? undefined : num;
+    }
+    function getAttributeFloat(el, name) {
+        var attr = el.getAttribute(name);
+        var num = attr != null ? parseFloat(attr) : NaN;
+        return isNaN(num) ? undefined : num;
     }
     var SingleElementIterator = /** @class */ (function () {
         function SingleElementIterator(el) {
@@ -140,10 +162,11 @@ var vizrt;
                 continue;
             if (nsUri != null && nsUri !== node.namespaceURI)
                 continue;
-            if (name != null && name !== node.tagName)
+            if (name != null && name !== node.localName)
                 continue;
             return node;
         }
+        return null;
     }
     function getListDefElement(fieldDefElement, fieldPath) {
         var result = getFirstChildElement(fieldDefElement, vizNs, "listdef");
@@ -172,7 +195,7 @@ var vizrt;
                     continue;
                 if (this.nsUri != null && this.nsUri !== node.namespaceURI)
                     continue;
-                if (this.name != null && this.name !== node.tagName)
+                if (this.name != null && this.name !== node.localName)
                     continue;
                 return node;
             }
@@ -209,11 +232,13 @@ var vizrt;
         return null;
     }
     function setFieldValueContent(fieldElement, valueChildNode) {
+        // fieldElement MUST be a field element within a payload document (meaning it has a document)
         var oldValueEl = getFirstChildElement(fieldElement, vizNs, "value");
         if (!oldValueEl && !valueChildNode)
             return;
         if (!valueChildNode) {
-            fieldElement.removeChild(oldValueEl);
+            if (oldValueEl)
+                fieldElement.removeChild(oldValueEl);
         }
         else {
             var valueElement = fieldElement.ownerDocument.createElementNS(vizNs, "value");
@@ -227,6 +252,7 @@ var vizrt;
         }
     }
     function setFieldValueAsText(fieldElement, text) {
+        // fieldElement MUST be a field element within a payload document (meaning it has a document)
         if (text == null) {
             setFieldValueContent(fieldElement, null);
         }
@@ -235,6 +261,7 @@ var vizrt;
         }
     }
     function setFieldValueAsParsedXml(fieldElement, xml) {
+        // fieldElement MUST be a field element within a payload document (meaning it has a document)
         if (!xml) {
             setFieldValueContent(fieldElement, null);
         }
@@ -242,16 +269,17 @@ var vizrt;
             var parser = new DOMParser();
             var doc = parser.parseFromString(xml, "text/xml");
             var el = getFirstChildElement(doc, null, null);
-            var contentElement = fieldElement.ownerDocument.importNode(el, true);
+            var contentElement = el ? fieldElement.ownerDocument.importNode(el, true) : null;
             setFieldValueContent(fieldElement, contentElement);
         }
     }
     function setFieldAnnotation(fieldElement, annotationType, annotationValue) {
+        // fieldElement MUST be a field element within a payload document (meaning it has a document)
         var oldAnnotationEl = getFirstChildElement(fieldElement, vizNs, "annotation");
         if (!oldAnnotationEl && !annotationValue)
             return false;
-        if (annotationValue == null) {
-            var oldValue = oldAnnotationEl.getAttribute(annotationType);
+        if (annotationValue == null && oldAnnotationEl) {
+            var oldValue = oldAnnotationEl.getAttribute(annotationType) || "";
             if (oldValue == null)
                 return false;
             oldAnnotationEl.removeAttribute(annotationType);
@@ -261,15 +289,15 @@ var vizrt;
         }
         else if (!oldAnnotationEl) {
             var annotationEl = fieldElement.ownerDocument.createElementNS(vizNs, "annotation");
-            annotationEl.setAttribute(annotationType, annotationValue);
+            annotationEl.setAttribute(annotationType, annotationValue || "");
             fieldElement.appendChild(annotationEl);
             return true;
         }
         else {
-            var oldValue = oldAnnotationEl.getAttribute(annotationType);
+            var oldValue = oldAnnotationEl.getAttribute(annotationType) || "";
             if (oldValue === annotationValue)
                 return false;
-            oldAnnotationEl.setAttribute(annotationType, annotationValue);
+            oldAnnotationEl.setAttribute(annotationType, annotationValue || "");
             return true;
         }
     }
@@ -287,6 +315,7 @@ var vizrt;
         return new RangeError("Insert position out of range (" + (-count - 1) + " to " + count + " expected).");
     }
     function createListItem(listDefElement) {
+        // listDefElement MUST be a field element within a payload or model document (meaning it has a document)
         var doc = listDefElement.ownerDocument;
         var payloadElement = doc.createElementNS(vizNs, "payload");
         var schemaElement = getFirstChildElement(listDefElement, vizNs, "schema");
@@ -294,7 +323,13 @@ var vizrt;
         var fieldDefElement;
         while ((fieldDefElement = iterator.next()) != null) {
             var fieldElement = doc.createElementNS(vizNs, "field");
-            fieldElement.setAttribute("name", fieldDefElement.getAttribute("name"));
+            var fieldElementName = fieldDefElement.getAttribute("name");
+            if (fieldElementName) {
+                fieldElement.setAttribute("name", fieldElementName);
+            }
+            else {
+                fieldElement.removeAttribute("name");
+            }
             var defaultContent = getFirstChildElement(fieldDefElement, vizNs, "value")
                 || getFirstChildElement(fieldDefElement, vizNs, "list");
             if (defaultContent != null)
@@ -329,6 +364,48 @@ var vizrt;
         var element = target;
         return element.tagName == "INPUT" || element.isContentEditable || element.tagName == "TEXTAREA";
     }
+    function isSafeMediaType(type) {
+        var splitPos = type.indexOf(";");
+        if (splitPos >= 0)
+            type = type.substr(0, splitPos);
+        return safeTypes.indexOf("|" + type.trim() + "|") >= 0;
+    }
+    function startsWith(text, prefix) {
+        if (text.length < prefix.length)
+            return false;
+        var c = prefix.length;
+        for (var i = 0; i != c; ++i) {
+            if (text.charAt(i) != prefix.charAt(i))
+                return false;
+        }
+        return true;
+    }
+    function isVideoType(type, forSure) {
+        if (startsWith(type, "video/"))
+            return true;
+        if (forSure)
+            return false;
+        var splitPos = type.indexOf(";");
+        if (splitPos >= 0)
+            type = type.substr(0, splitPos);
+        return type == "application/mxf" || type == "application/dash+xml";
+    }
+    function isAudioType(type, forSure) {
+        if (startsWith(type, "audio/"))
+            return true;
+        if (forSure)
+            return false;
+        var splitPos = type.indexOf(";");
+        if (splitPos >= 0)
+            type = type.substr(0, splitPos);
+        return type == "application/mxf" || type == "application/dash+xml";
+    }
+    function isAudioOrVideoType(type) {
+        return isVideoType(type, true) || isAudioType(type, false);
+    }
+    function isImageType(type) {
+        return startsWith(type, "image/");
+    }
     var PayloadIFrameHost = /** @class */ (function () {
         function PayloadIFrameHost(focusChangeHandler) {
             var _this = this;
@@ -338,9 +415,9 @@ var vizrt;
             if (focusChangeHandler != null) {
                 this._windowFocusListener = function () { self._focusChangeHandler("focused"); };
                 this._windowBlurListener = function () { self._focusChangeHandler("blurred"); };
-                this._docFocusInListener = function (event) { if (isInputElement(event.target))
+                this._docFocusInListener = function (event) { if (event.target && isInputElement(event.target))
                     _this._focusChangeHandler("input-focused"); };
-                this._docFocusOutListener = function (event) { if (isInputElement(event.target))
+                this._docFocusOutListener = function (event) { if (event.target && isInputElement(event.target))
                     _this._focusChangeHandler("input-blurred"); };
             }
             else {
@@ -355,18 +432,26 @@ var vizrt;
             // which will be contained in the event parameter passed to the event listener if the event is of type MessageEvent.
             if (this._listener) {
                 window.removeEventListener("message", this._listener, false);
-                window.removeEventListener("focus", this._windowFocusListener);
-                window.removeEventListener("blur", this._windowBlurListener);
-                document.body.removeEventListener("focusin", this._docFocusInListener);
-                document.body.removeEventListener("focusout", this._docFocusOutListener);
+                if (this._windowFocusListener)
+                    window.removeEventListener("focus", this._windowFocusListener);
+                if (this._windowBlurListener)
+                    window.removeEventListener("blur", this._windowBlurListener);
+                if (this._docFocusInListener)
+                    document.body.removeEventListener("focusin", this._docFocusInListener);
+                if (this._docFocusOutListener)
+                    document.body.removeEventListener("focusout", this._docFocusOutListener);
                 this._listener = null;
             }
             if (listener) {
                 window.addEventListener("message", listener, false);
-                window.addEventListener("focus", this._windowFocusListener);
-                window.addEventListener("blur", this._windowBlurListener);
-                document.body.addEventListener("focusin", this._docFocusInListener);
-                document.body.addEventListener("focusout", this._docFocusOutListener);
+                if (this._windowFocusListener)
+                    window.addEventListener("focus", this._windowFocusListener);
+                if (this._windowBlurListener)
+                    window.addEventListener("blur", this._windowBlurListener);
+                if (this._docFocusInListener)
+                    document.body.addEventListener("focusin", this._docFocusInListener);
+                if (this._docFocusOutListener)
+                    document.body.addEventListener("focusout", this._docFocusOutListener);
                 this._listener = listener;
             }
         };
@@ -396,9 +481,12 @@ var vizrt;
     /**
      * Callback function for values in map object passed to {@link vizrt.PayloadHosting#setFieldValueCallbacks}.
      * @callback vizrt~FieldValueCallback
-     * @param {string|Element|null} value The new value of the field. Will be <code>null</code> if the field does not have a value,
-     *                                    an XML Element if the value of the field contains an XML element,
-     *                                    or a string containing the text content of the value otherwise.
+     * @param {string|Element|number|null} value The new value of the field for scalar fields or new item count for list fields.
+     *                                    Will be:
+     *                                    <ul><li><b><code>null</code></b> &ndash; if the field does not contain a value nor a list</li>
+     *                                    <li><b>XML <code>Element</code></b> &ndash; if the value of the field contains an XML element</li>
+     *                                    <li><b><code>string</code></b> &ndash; containing the value as unescaped text if the field constains a non-XML value</li>
+     *                                    <li><b><code>number</code></b> &ndash; containing the number of items in the list if the field contains a list</li></ul>
      */
     /**
      * Callback function used by {@link vizrt.PayloadHosting#updatePayload}.
@@ -407,6 +495,110 @@ var vizrt;
      *          <code>false</code> to notify the payload host only if some fields were actually updated using
      *          some of the field value setter functions (e.g. {@link vizrt.PayloadHosting#setFieldText}).
      */
+    /**
+     * Interface for specifying one field expected by the scene using a simplified JSON based scheme
+     *
+     * @interface vizrt.IFieldInfo
+     * @property {string} name the name/ID of the field
+     * @property {string} [type] the type of the field. Should be one of:
+     * <ul><li><code>"single-line-text"</code> - a single line of trimmed plain text</li>
+     * <li><code>"text"</code> - text possibly spanning multiple lines</li>
+     * <li><code>"integer"</code> - integer number</li>
+     * <li><code>"decimal"</code> - any number</li>
+     * <li><code>"boolean"</code> - <code>true</code> or <code>false</code></li>
+     * <li><code>"image"</code> - an image stored as an atom entry</li></ul>
+     * If omitted "single-line-text" is assumed.
+     * @property {string} [label] the label to be used for the field.
+     */
+    /**
+    * Interface for specifying information about duration of a scene using a simplified JSON based scheme
+    *
+    * @interface vizrt.IDurationInfo
+    * @property {number} [default] the default duration of the scene measured in seconds
+    * @property {number} [minimum] the minimum duration of the scene measured in seconds
+    * @property {number} [maximum] the maximum duration of the scene measured in seconds
+    */
+    /**
+     * Interface for specifying the model expected by the scene using a simplified JSON based scheme
+     *
+     * @interface vizrt.IModelInfo
+     * @property {vizrt.IDurationInfo} [duration] information about the duration of the scene
+     * @property {vizrt.IFieldInfo[]} fields array containing information about the fields that the scene expects
+     */
+    /**
+     * Interface holding information about a media found in an image/video/audio field value
+     *
+     * @interface vizrt.IMediaInfo
+     * @property {boolean} isDefault true if the media entry is marked as the default media
+     * @property {string} uri the URI where to locate the media
+     * @property {string} type the MIME type of the media (e.g. <code>"image/jpeg"</code>)
+     * @property {number} [duration] the duration of the media measured in seconds (only available for audio and video)
+     * @property {number} [width] the width of the image measured in pixels (only available for image and video)
+     * @property {number} [height] the height of the image measured in pixels (only available for image and video)
+     * @property {number} [size] the file size of the the media measured in bytes
+     */
+    function createFieldDefElement(modelDoc, fieldInfo) {
+        var fieldEl = modelDoc.createElementNS(vizNs, "fielddef");
+        fieldEl.setAttribute("name", fieldInfo.name);
+        if (fieldInfo.label)
+            fieldEl.setAttribute("label", fieldInfo.label);
+        var xsdType = null;
+        var mediaType = null;
+        var assignSame = function () { xsdType = fieldInfo.type; };
+        var typeAssignements = {
+            "single-line-text": function () { return xsdType = "normalizedString"; },
+            "text": function () { return xsdType = "string"; },
+            "boolean": assignSame,
+            "decimal": assignSame,
+            "integer": assignSame,
+            "image": function () { return mediaType = "application/atom+xml;type=entry;media=image"; },
+        };
+        if (!fieldInfo.type) {
+            xsdType = "normalizedString";
+        }
+        else if (Object.keys(typeAssignements).indexOf(fieldInfo.type) === -1) {
+            // fieldInfo.type was set but it is not supported.
+            throw new TypeError([
+                "field with name <",
+                fieldInfo.name,
+                "> has no 'type' matching any of the following: ",
+                Object.keys(typeAssignements).join(", "),
+            ].join(""));
+        }
+        else {
+            typeAssignements[fieldInfo.type]();
+        }
+        if (!mediaType && xsdType)
+            mediaType = "text/plain";
+        if (mediaType)
+            fieldEl.setAttribute("mediatype", mediaType);
+        if (xsdType)
+            fieldEl.setAttribute("xsdtype", xsdType);
+        return fieldEl;
+    }
+    function createModelXml(modelInfo) {
+        var parser = new DOMParser();
+        var modelDoc = parser.parseFromString("<model xmlns='http://www.vizrt.com/types'><schema/></model>", "text/xml");
+        var modelEl = getFirstChildElement(modelDoc, vizNs, "model");
+        var schemaEl = getFirstChildElement(modelEl, vizNs, "schema");
+        // Add the fields
+        for (var _i = 0, _a = modelInfo.fields; _i < _a.length; _i++) {
+            var field = _a[_i];
+            schemaEl.appendChild(createFieldDefElement(modelDoc, field));
+        }
+        // Possibly add duration information
+        if (modelInfo.duration) {
+            var durationEl = modelDoc.createElementNS(bgfxNs, "duration");
+            if (modelInfo.duration.default != undefined)
+                durationEl.setAttribute("default", modelInfo.duration.default.toString());
+            if (modelInfo.duration.minimum != undefined)
+                durationEl.setAttribute("min", modelInfo.duration.minimum.toString());
+            if (modelInfo.duration.maximum != undefined)
+                durationEl.setAttribute("max", modelInfo.duration.maximum.toString());
+            modelEl.appendChild(durationEl);
+        }
+        return modelDoc;
+    }
     /**
      * Simple class allowing logging of events
      */
@@ -470,14 +662,21 @@ var vizrt;
     var PayloadHosting = /** @class */ (function () {
         function PayloadHosting() {
             this._eventTarget = new EventDispatcher();
+            this._host = null;
+            this._payloadDoc = null;
             this._isInUpdatePayload = false;
             this._isAboutToNotifyHost = false;
             this._isInFinishSetPayload = false;
             this._usesAutomaticBindings = true;
             this._blurListener = null;
             this._htmlElementWithPendingIncomingChange = null;
+            this._listeners = [];
             this._unknownMessageHandler = null;
+            this._controlledFocus = false;
+            this._hostListener = null;
             this._fieldValueCallbacks = null;
+            this._pendingSetTime = false;
+            this._rendererLocks = [];
         }
         /**
          * Initializes the PayloadHosting object.
@@ -494,7 +693,14 @@ var vizrt;
             if (!host) {
                 var self_1 = this;
                 host = new PayloadIFrameHost(function (type) {
-                    self_1._host.postMessage({ type: "focus_changed", event: type, guestid: getGuestIdentifier() }, getHostOrigin());
+                    if (self_1._host) {
+                        var focusedControlled = self_1._controlledFocus && type == "focused";
+                        self_1._host.postMessage({
+                            type: "focus_changed",
+                            event: focusedControlled ? "focused-controlled" : type,
+                            guestid: getGuestIdentifier()
+                        }, getHostOrigin());
+                    }
                 });
             }
             this._host = host;
@@ -522,6 +728,7 @@ var vizrt;
             this._readyCallback = null;
             this._removePreviousListeners();
             this._eventTarget.removeAllListeners();
+            this._modelInfoXml = undefined;
         };
         /**
          * Add an event listener to this object.
@@ -564,21 +771,139 @@ var vizrt;
         PayloadHosting.prototype.removeEventListener = function (type, callback) {
             this._eventTarget.removeEventListener(type, callback);
         };
+        PayloadHosting.prototype.getExistingRendererLock = function (target) {
+            var i;
+            for (i = 0; i < this._rendererLocks.length; i++) {
+                if (this._rendererLocks[i].target === target) {
+                    return this._rendererLocks[i];
+                }
+            }
+            return null;
+        };
+        PayloadHosting.prototype.removeRendererLock = function (o) {
+            var i;
+            for (i = 0; i < this._rendererLocks.length; i++) {
+                if (this._rendererLocks[i] === o) {
+                    this._rendererLocks.splice(i, 1);
+                    return;
+                }
+            }
+        };
+        /**
+         * Seeks to the given time into the given video in a way
+         * that will delay the propagation of the "present" message until
+         * the seek operation is complete or an error occurred. This will
+         * ensure that the rendering process will wait for this operation to
+         * be complete before actually burning the frame.
+         *
+         * @param {HTMLVideoElement} video The video element to seek
+         * @param {number} time The time position to seek to, given in seconds
+         * @function vizrt.PayloadHosting#safeVideoSeek
+         */
+        PayloadHosting.prototype.safeVideoSeek = function (video, time) {
+            var lock = this.getRendererLock(video);
+            var listener = function () {
+                lock.unlock();
+                video.removeEventListener("seeked", listener);
+                video.removeEventListener("error", listener);
+            };
+            video.addEventListener("seeked", listener);
+            video.addEventListener("error", listener);
+            video.currentTime = time;
+        };
+        /**
+         * Loads the given url into the given image element in a way
+         * that will delay the propagation of the "present" message until
+         * the seek operation is complete or an error occurred. This will
+         * ensure that the rendering process will wait for this operation to
+         * be complete before actually burning the frame.
+         *
+         * @param {HTMLImageElement} image The image element
+         * @param {string} url The url to load into the src attribute of the image element
+         * @function vizrt.PayloadHosting#safeImageLoad
+         */
+        PayloadHosting.prototype.safeImageLoad = function (image, url) {
+            var lock = this.getRendererLock(image);
+            var listener = function () {
+                lock.unlock();
+                image.removeEventListener("load", listener);
+                image.removeEventListener("error", listener);
+            };
+            image.addEventListener("load", listener);
+            image.addEventListener("error", listener);
+            image.src = url;
+        };
+        /**
+         * Returns a lock that will prevent the pending processing of the "set_time" message,
+         * if any, to reply with the "present" message to the host until the unlock() method is invoked.
+         * This mechanism is meant to delay the rendering process of a frame until some asynchronous
+         * operation is completed, like for instance loading and image.
+         *
+         * @param {any} o The object we want a renderer lock for
+         * @return {RendererLock} An object whose unlock() method must be invoked to release the lock.
+         * @function vizrt.PayloadHosting#getRendererLock
+         */
+        PayloadHosting.prototype.getRendererLock = function (o) {
+            var l = this.getExistingRendererLock(o);
+            if (l !== null) {
+                // We don't want to put more than one lock per object
+                return l;
+            }
+            var lock = {};
+            lock.target = o;
+            var pl_this = this;
+            lock.unlock = function () {
+                pl_this.removeRendererLock(lock);
+                if (pl_this._rendererLocks.length == 0) {
+                    if (pl_this._pendingSetTime) {
+                        // If there is no more lock and if there is a pending set_time
+                        // operation, it is time to send a "present" message to the host
+                        // to give green light to the renderer
+                        pl_this._pendingSetTime = false;
+                        if (!pl_this._host)
+                            throw Error("Host not defined");
+                        pl_this._host.postMessage({ type: "present" }, getHostOrigin());
+                    }
+                }
+            };
+            this._rendererLocks.push(lock);
+            return lock;
+        };
         PayloadHosting.prototype._onMessageFromHost = function (message) {
+            if (!this._host)
+                throw Error("Host not defined");
             var messageType = message.data ? message.data.type : "<no message data>";
             if (messageType === "set_payload") {
-                this._setPayload(message.data.xml);
+                if (!message.data)
+                    throw Error("No message data");
+                this._setPayload(message.data.xml || "");
+            }
+            else if (messageType === "request_model_info" && this._modelInfoXml) {
+                this._host.postMessage({ type: "provide_model_info", xml: this._modelInfoXml, guestid: getGuestIdentifier() }, getHostOrigin());
             }
             else {
                 if (this._unknownMessageHandler && !this._unknownMessageHandler(message))
                     this._log("Got unknown message type from host: " + messageType);
+                // Check if unknown-message handler has set model info, and in that case provide it to the host
+                if (messageType === "request_model_info" && this._modelInfoXml) {
+                    this._host.postMessage({ type: "provide_model_info", xml: this._modelInfoXml, guestid: getGuestIdentifier() }, getHostOrigin());
+                }
                 if (messageType === "set_time") {
-                    this._host.postMessage({ type: "present" }, getHostOrigin());
+                    if (this._rendererLocks.length != 0) {
+                        // If the processing of the set_time message has resulted in the creation
+                        // of renderer locks, we need to wait for them to be unlocked before
+                        // we can sending the "present" message back to the host
+                        this._pendingSetTime = true;
+                    }
+                    else {
+                        this._host.postMessage({ type: "present" }, getHostOrigin());
+                    }
                 }
             }
         };
         PayloadHosting.prototype._log = function (message) {
-            this._host.log(message);
+            if (this._host)
+                this._host.log(message);
         };
         PayloadHosting.prototype._lookupXmlElement = function (fieldPath, lookupPayload) {
             if (!this._payloadDoc)
@@ -683,17 +1008,33 @@ var vizrt;
             };
             this._htmlElementWithPendingIncomingChange = htmlElement;
         };
-        PayloadHosting.prototype._getAnyFieldValue = function (fieldPath) {
+        PayloadHosting.prototype._getFieldContent = function (fieldPath) {
             if (!this.isPayloadReady())
-                return undefined; // to ensure that we get a change notification when payload becomes ready (even if value is null)
+                return { cache: "null", value: null }; // to ensure that we get a change notification when payload becomes ready (even if value is null)
             var fieldElement = this._lookupXmlElement(fieldPath, false);
             if (!fieldElement)
-                return null;
+                return { cache: "null", value: null };
             var valueElement = getFirstChildElement(fieldElement, vizNs, "value");
-            if (!valueElement)
-                return null;
-            var xmlElement = getFirstChildElement(valueElement, null, null);
-            return !xmlElement ? text(valueElement) : xmlElement;
+            if (valueElement) {
+                var xmlElement = getFirstChildElement(valueElement, null, null);
+                if (!xmlElement) {
+                    var textValue = text(valueElement);
+                    return { cache: "value:" + textValue, value: textValue };
+                }
+                else {
+                    return { cache: "xml-value:" + (new XMLSerializer).serializeToString(xmlElement), value: xmlElement };
+                }
+            }
+            var listElement = getFirstChildElement(fieldElement, vizNs, "list");
+            if (!listElement)
+                return { cache: "null", value: null };
+            // We have a list, count the number of elements
+            var iterator = new TypedElementIterator(new SingleElementIterator(listElement), vizNs, "payload");
+            var count = 0;
+            while (iterator.next() != null) {
+                ++count;
+            }
+            return { cache: "xml-value:" + (new XMLSerializer).serializeToString(listElement), value: count };
         };
         PayloadHosting.prototype._initializeOnFields = function (fieldElementIterator, parentPath, parentId) {
             parentId = parentId ? parentId + "_" : "field_";
@@ -701,8 +1042,8 @@ var vizrt;
             while ((fieldElement = fieldElementIterator.next()) != null) {
                 var fieldName = fieldElement.getAttribute("name");
                 var fieldPath = parentPath ? parentPath + "/" + fieldName : fieldName;
+                var fieldId = parentId + fieldName;
                 if (this._usesAutomaticBindings) {
-                    var fieldId = parentId + fieldName;
                     var htmlElement = document.getElementById(fieldId);
                     if (htmlElement && typeof htmlElement["value"] !== "undefined") {
                         var dataType = htmlElement.getAttribute("data-type");
@@ -727,7 +1068,7 @@ var vizrt;
                         this._listeners.push(new ListenerRegistration(htmlElement, "input", listener));
                     }
                 }
-                this._initializeOnFields(new TypedElementIterator(new SingleElementIterator(fieldElement), vizNs, "field"), fieldPath, fieldId);
+                this._initializeOnFields(new TypedElementIterator(new SingleElementIterator(fieldElement), vizNs, "field"), fieldPath || undefined, fieldId);
             }
         };
         PayloadHosting.prototype._initializeOnPayload = function () {
@@ -736,13 +1077,15 @@ var vizrt;
             this._initializeOnFields(new TypedElementIterator(new SingleElementIterator(payloadElement), vizNs, "field"));
         };
         PayloadHosting.prototype._updateFieldValueCallbacks = function () {
+            if (!this._fieldValueCallbacks)
+                return;
             for (var fieldPath in this._fieldValueCallbacks) {
                 var entry = this._fieldValueCallbacks[fieldPath];
-                var newValue = this._getAnyFieldValue(fieldPath);
+                var newContent = this._getFieldContent(fieldPath);
                 var oldCacheValue = entry.value;
-                entry.value = getFieldValueForCache(newValue);
+                entry.value = newContent.cache;
                 if (entry.value !== oldCacheValue) // undefined !== null, but undefined == null
-                    entry.callback(newValue);
+                    entry.callback(newContent.value);
             }
         };
         PayloadHosting.prototype._setPayload = function (payloadXml) {
@@ -750,7 +1093,7 @@ var vizrt;
             this._payloadDoc = parser.parseFromString(payloadXml, "text/xml");
             var payloadElement = getFirstChildElement(this._payloadDoc, vizNs, "payload");
             var inlineModelElement = getFirstChildElement(payloadElement, vizNs, "model");
-            var modelUri = payloadElement.getAttribute("model");
+            var modelUri = payloadElement ? payloadElement.getAttribute("model") : null;
             if (inlineModelElement != null || modelUri == null) {
                 this._modelUri = null;
                 this._modelDoc = null;
@@ -840,20 +1183,20 @@ var vizrt;
             return this._usesAutomaticBindings;
         };
         /**
-         * <p>Sets callbacks to be called back when the values of a given set of fields change.
-         * A callback will be called if the value of the associated field changes both if the change is
+         * <p>Sets callbacks to be called back when the values or lists of a given set of fields change.
+         * A callback will be called if the value or list of the associated field changes both if the change is
          * caused by the host or if it is caused by a programmatic change to the field using the
          * payloadhosting API.</p>
          * <p><b>Note!</b> The order of the callbacks is relevant:
-         * If the value of field <i>y</i> (that has a value-change callback) is changed during execution of the value change callback
+         * If the value or list of field <i>y</i> (that has a value-change callback) is changed during execution of the value change callback
          * of field <i>x</i>, the callback of field <i>y</i> will be triggered if and only if field <i>y</i> is after field <i>x</i> in the
          * value callback map. However, if the callback of <i>y</i> is before the callback of <i>x</i> in the map, it will
          * be called next time there is a change to the payload. Therefore, to get a predictable result, it is recommended that, if
-         * the value-change callback of a field change the values of other fields with registered value-change callbacks, the callbacks
+         * the value-change callback of a field change the values or lists of other fields with registered value-change callbacks, the callbacks
          * of those other fields are put after the callback of the first field.</p>
          * <p>Also note that when the host changes the payload the field value callbacks are called before the <code>payloadchange</code>
          * event is triggered (see <code>[addEventListener]{@link vizrt.PayloadHosting#addEventListener}</code>).
-         * Also, if the values of some fields are changed during handling of the <code>payloadchange</code> event, the value-change
+         * Also, if the values or lists of some fields are changed during handling of the <code>payloadchange</code> event, the value-change
          * callbacks for those fields will not be called.</p>
          * <p> If changing multiple fields during handling of these callbacks there is no need for using
          * <code>[updatePayload]{@link vizrt.PayloadHosting#updatePayload}</code> (to prevent multiple updates of the host)
@@ -889,7 +1232,11 @@ var vizrt;
             if (!callbacks)
                 return;
             for (var fieldPath in callbacks) {
-                this._fieldValueCallbacks[fieldPath] = { callback: callbacks[fieldPath], value: getFieldValueForCache(this._getAnyFieldValue(fieldPath)) };
+                if (typeof fieldPath !== 'string')
+                    throw Error("Field path is not a string: " + {}.toString.call(fieldPath));
+                if (typeof callbacks[fieldPath] !== 'function')
+                    throw Error("Callback value for field '" + fieldPath + " is not a function, but '" + (typeof callbacks[fieldPath]) + "'.");
+                this._fieldValueCallbacks[fieldPath] = { callback: callbacks[fieldPath], value: this._getFieldContent(fieldPath).cache };
             }
         };
         /**
@@ -908,6 +1255,59 @@ var vizrt;
          */
         PayloadHosting.prototype.getUnknownMessageHandler = function () {
             return this._unknownMessageHandler;
+        };
+        /**
+         * Used to register a URL-based logout hook that will be called when the supporting application exits.
+         * If supported, the label and icon will be used to designate the type of logout being performed by the application.
+         * @function vizrt.PayloadHosting#registerLogoutHook
+         * @param {string} providerId  Unique identifier for the the domain of the identity provider that has been used to
+         *                             authorize access to external services. In most cases, only one active authorization is
+         *                             allowed per domain, and this identifier will simply be the identity providers
+         *                             host-domain. New requests with the same identifier will be treated with the assumption
+         *                             that any previously registered log-out requests have already been serviced by the
+         *                             frame, and prior requests will be overwritten.
+         * @param {string} label       The label that will be used by the application to specify what logout action is being
+         *                             performed (if this feature is supported by the application).
+         * @param {string} iconUrl     The URL of the icon that will be used to show a small logo for the publishing agent
+         *                             that will be logged out (if this feature is supported by the application). This can be
+         *                             a relative URL with respect to the path of the calling frame.
+         * @param {string} brokerJsUrl The URL used by the supporting application to log out of the publishing agent that was
+         *                             previously logged in by a user action. This can be a relative URL with respect to the
+         *                             path of the calling frame.
+         * @param {string} logoutData  JSON object holding any additional fields needed by the logout javascript file to
+         *                             perform logout operations.
+         * @see [unregisterLogoutHook]{@link vizrt.PayloadHosting#unregisterLogoutHook},
+         */
+        PayloadHosting.prototype.registerLogoutHook = function (providerId, label, iconUrl, brokerJsUrl, logoutData) {
+            if (!this._host)
+                throw Error("Host is not defined");
+            var brokerJsLink = document.createElement('a');
+            brokerJsLink.href = brokerJsUrl;
+            var iconLink = document.createElement('a');
+            iconLink.href = iconUrl;
+            this._host.postMessage({
+                "type": "logged_in",
+                "providerId": providerId,
+                "label": label,
+                "iconUri": iconLink.href,
+                "brokerJsUri": brokerJsLink.href,
+                "logoutData": JSON.stringify(logoutData),
+                "guestid": getGuestIdentifier()
+            }, getHostOrigin());
+        };
+        /**
+         * Used to un-register a logout hook. This can be used if another method of logging out was performed by user action and
+         * no longer needs to be repeated by the application. This must also be called in the logout code to let the application
+         * know that the logout action has completed. This call does not require a valid guest ID when called from the logout
+         * page. The message providerId will be used to uniquely identify the page instead.
+         * @function vizrt.PayloadHosting#unregisterLogoutHook
+         * @param {string} providerId Unique identifier for the the domain of the identity provider that has been previously logged in to.
+         * @see [registerLogoutHook]{@link vizrt.PayloadHosting#registerLogoutHook},
+         */
+        PayloadHosting.prototype.unregisterLogoutHook = function (providerId) {
+            if (!this._host)
+                throw Error("Host is not defined");
+            this._host.postMessage({ "type": "logged_out", "providerId": providerId, "guestid": getGuestIdentifier() }, getHostOrigin());
         };
         /**
          * Adds an item to the list of a list field.
@@ -941,12 +1341,11 @@ var vizrt;
             var fieldDefElement = this._lookupXmlDefElementStrict(fieldPath, false);
             var listDefElement = getListDefElement(fieldDefElement, fieldPath);
             var maxCount = getListMaxCount(listDefElement);
-            var insertAtEnd = position == null;
-            var count = (insertAtEnd || position < 0 || maxCount != null) ? (this.getListFieldLength(fieldPath) || 0) : null;
-            if (insertAtEnd) {
+            if (position === undefined) {
                 position = -1;
             }
-            else if (position < -1) {
+            var count = (position < 0 || maxCount != null) ? (this.getListFieldLength(fieldPath) || 0) : 0;
+            if (position < -1) {
                 position = count + 1 + position;
                 if (position < 0)
                     throw createAddListItemRangeError(count);
@@ -1045,6 +1444,123 @@ var vizrt;
             return fieldElement ? getFieldValueXmlAsString(fieldElement) : null;
         };
         /**
+         * Extract information about the media from the atom entry value of the field
+         * @function vizrt.PayloadHosting#getMediaInfoFromAtomEntry
+         * @param {Element} atomEntry The atom entry value of the field
+         * @returns {vizrt.IMediaInfo[]} Information about the media found in the atom entry.
+         * @see [getFieldXml]{@link vizrt.PayloadHosting#getFieldXml}
+         * @see [getFieldMediaInfo]{@link vizrt.PayloadHosting#getFieldMediaInfo}
+         */
+        PayloadHosting.prototype.getMediaInfoFromAtomEntry = function (atomEntry, onlySafe) {
+            var entryContentEl = getFirstChildElement(atomEntry, atomNs, "content");
+            var entryContentType = entryContentEl ? entryContentEl.getAttribute("type") : null;
+            var entryContentUrl = entryContentType == "application/vnd.vizrt.viz.image"
+                ? getSafeVizImageUrl(entryContentEl)
+                : (entryContentEl ? entryContentEl.getAttribute("src") : null);
+            var entryContentInfo = (entryContentUrl && entryContentType)
+                ? { isDefault: false, uri: entryContentUrl, type: entryContentType }
+                : null;
+            if (entryContentInfo && onlySafe && !isSafeMediaType(entryContentInfo.type))
+                entryContentInfo = null;
+            // Determine the main media type of the asset (audio/video/image)
+            var isAudio = false;
+            var isVideo = false;
+            var isImage = false;
+            var isAudioOrVideo = false;
+            if (entryContentType && (isVideoType(entryContentType, true) || entryContentType == "application/vnd.vizrt.viz.video")) {
+                isVideo = true;
+                isAudioOrVideo = true;
+            }
+            else if (entryContentType && (isAudioType(entryContentType, true) || entryContentType == "application/vnd.vizrt.viz.audio")) {
+                isAudio = true;
+                isAudioOrVideo = true;
+            }
+            else if (entryContentType && (isImageType(entryContentType) || entryContentType == "application/vnd.vizrt.viz.image")) {
+                isImage = true;
+            }
+            else {
+                var mediaTypeEl = getFirstChildElement(atomEntry, vizmediaNs, "media");
+                var mediaType = mediaTypeEl ? text(mediaTypeEl) : null;
+                if (mediaType) {
+                    isAudio = mediaType == "audio";
+                    isVideo = mediaType == "video";
+                    isImage = mediaType == "image";
+                    isAudioOrVideo = isAudio || isVideo;
+                }
+            }
+            var groupEl = getFirstChildElement(atomEntry, mrssNs, "group");
+            if (!groupEl)
+                return entryContentInfo ? [entryContentInfo] : [];
+            // Loop over the <media:content> elements of the the <media:group> element
+            var defaultItems = [];
+            var nonDefaultItems = [];
+            var contentEl;
+            var iterator = new TypedElementIterator(new SingleElementIterator(groupEl), mrssNs, "content");
+            while ((contentEl = iterator.next()) != null) {
+                // Check if the content element is relevant
+                if (!contentEl.getAttribute("url") || !contentEl.getAttribute("type") || contentEl.getAttribute("order"))
+                    continue;
+                var uri = contentEl.getAttribute("url");
+                var type = contentEl.getAttribute("type");
+                if (onlySafe && !isSafeMediaType(type))
+                    continue;
+                if ((isAudioOrVideo && isImageType(type) || isVideo && isAudioType(type, true)) || (isImage && isAudioOrVideoType(type)))
+                    continue;
+                // Determine "where" to put the content element
+                var isDefaultAttr = contentEl.getAttribute("isDefault");
+                var isDefault = "true" == isDefaultAttr || "1" == isDefaultAttr;
+                var insertFirst = false;
+                if (entryContentInfo != null && entryContentInfo.uri == uri) {
+                    entryContentInfo = null;
+                    insertFirst = !isDefault;
+                }
+                // Create the media info object
+                var item = { isDefault: isDefault, uri: uri, type: type };
+                var width = getAttributeInt(contentEl, "width");
+                if (width != undefined) {
+                    item.width = width;
+                }
+                var height = getAttributeInt(contentEl, "height");
+                if (height != undefined) {
+                    item.height = height;
+                }
+                var duration = getAttributeFloat(contentEl, "duration");
+                if (duration != undefined) {
+                    item.duration = duration;
+                }
+                var size = getAttributeInt(contentEl, "fileSize");
+                if (size != undefined) {
+                    item.size = size;
+                }
+                // Add it to the relevant position ("where")
+                if (isDefault) {
+                    defaultItems.push(item);
+                }
+                else if (insertFirst) {
+                    nonDefaultItems.splice(0, 0, item);
+                }
+                else {
+                    nonDefaultItems.push(item);
+                }
+            }
+            if (entryContentInfo != null) {
+                nonDefaultItems.splice(0, 0, entryContentInfo);
+            }
+            return !defaultItems.length ? nonDefaultItems : !nonDefaultItems.length ? defaultItems : defaultItems.concat(nonDefaultItems);
+        };
+        /**
+         * Gets information about the media of a field
+         * @function vizrt.PayloadHosting#getFieldMediaInfo
+         * @param {string} fieldPath The path of the field
+         * @returns {vizrt.IMediaInfo[] | null} Information about the media of the field or <code>null</code> if the field does not exist.
+         * @throws {Error} Throws an <code>Error</code> if not <code>[isPayloadReady]{@link vizrt.PayloadHosting#isPayloadReady}()</code>.
+         * @see [fieldExists]{@link vizrt.PayloadHosting#fieldExists} for further information about field paths.
+         */
+        PayloadHosting.prototype.getFieldMediaInfo = function (fieldPath, onlySafe) {
+            var fieldValue = this.getFieldXml(fieldPath);
+            return fieldValue ? this.getMediaInfoFromAtomEntry(fieldValue, onlySafe) : null;
+        };
+        /**
          * Determines the media type for a scalar field.
          * @function vizrt.PayloadHosting#getFieldXsdType
          * @param {string} fieldPath The path of the field
@@ -1074,9 +1590,8 @@ var vizrt;
             if (!listEl)
                 return null;
             var iterator = new TypedElementIterator(new SingleElementIterator(listEl), vizNs, "payload");
-            var payloadElement;
             var result = 0;
-            while ((payloadElement = iterator.next()) != null) {
+            while (iterator.next() != null) {
                 ++result;
             }
             return result;
@@ -1181,7 +1696,7 @@ var vizrt;
             var count = (position < 0 || minCount) ? (this.getListFieldLength(fieldPath) || 0) : null;
             // Convert negative index to zero-based index
             if (position < 0) {
-                position = count + position;
+                position = (count || 0) + position;
                 if (position < 0)
                     throw createRemoveListItemRangeError(count);
             }
@@ -1195,14 +1710,14 @@ var vizrt;
             if (element == null)
                 throw createRemoveListItemRangeError(elmPosition);
             // Check minimum count
-            if (minCount && count <= minCount)
+            if (minCount && (count || 0) <= (minCount || 0))
                 throw new Error("Cannot remove list item. The list of '" + fieldPath + "' must contain at least " + minCount + " items.");
             // Remove the XML element corresponding to the list item and notify host about change
             listEl.removeChild(element);
             this.notifyHostAboutPayloadChange();
         };
         /**
-         * Sets the field value to a text
+         * Sets the field value to a text. Does nothing if the text value of the field does not change.
          * @function vizrt.PayloadHosting#setFieldText
          * @param {string} fieldPath The path of the field
          * @param {string} text The text to be used as content of the value of the field.
@@ -1212,11 +1727,15 @@ var vizrt;
          * @see [getFieldText]{@link vizrt.PayloadHosting#getFieldText}
          */
         PayloadHosting.prototype.setFieldText = function (fieldPath, text) {
-            setFieldValueAsText(this._lookupXmlElementStrict(fieldPath, false), text);
+            var fieldElement = this._lookupXmlElementStrict(fieldPath, false);
+            if (getTextFromFieldElement(fieldElement) == text)
+                return;
+            setFieldValueAsText(fieldElement, text);
             this.notifyHostAboutPayloadChange();
         };
         /**
          * Sets the field value from an XML element. Ensures that the host is notified about the change in the payload.
+         * Note that this method will currently send an updated payload to the host even if the field value does not change.
          * @function vizrt.PayloadHosting#setFieldXml
          * @param {string} fieldPath The path of the field to be changed
          * @param {Element|string|null} xml
@@ -1237,7 +1756,7 @@ var vizrt;
                 setFieldValueContent(fieldElement, xml);
             }
             else {
-                setFieldValueContent(fieldElement, this._payloadDoc.importNode(xml, true));
+                setFieldValueContent(fieldElement, this._payloadDoc ? this._payloadDoc.importNode(xml, true) : null);
             }
             this.notifyHostAboutPayloadChange();
         };
@@ -1367,6 +1886,8 @@ var vizrt;
          * @see [fieldExists]{@link vizrt.PayloadHosting#fieldExists} for further information about field paths.
          */
         PayloadHosting.prototype.editField = function (fieldPath, editRequestParameters) {
+            if (!this._host)
+                throw Error("Host is not defined");
             var data = { type: "edit_field", path: fieldPath, guestid: getGuestIdentifier() };
             if (editRequestParameters) {
                 if (editRequestParameters.preferFeedBrowser)
@@ -1389,6 +1910,8 @@ var vizrt;
          * @function vizrt.PayloadHosting#notifyHostAboutPayloadChange
          */
         PayloadHosting.prototype.notifyHostAboutPayloadChange = function () {
+            if (!this._host)
+                throw new Error("Host is not defined");
             if (this._isAboutToNotifyHost)
                 return; // Prevents recursion through field value callbacks.
             if (this._isInUpdatePayload) {
@@ -1400,12 +1923,53 @@ var vizrt;
                 if (this._fieldValueCallbacks && !this._isInFinishSetPayload)
                     this._updateFieldValueCallbacks();
                 var serializer = new XMLSerializer();
-                var newXml = serializer.serializeToString(this._payloadDoc);
+                var newXml = this._payloadDoc ? serializer.serializeToString(this._payloadDoc) : "";
                 this._host.postMessage({ type: "payload_changed", xml: newXml, guestid: getGuestIdentifier() }, getHostOrigin());
             }
             finally {
                 this._isAboutToNotifyHost = false;
             }
+        };
+        /**
+         * Sets model information to be provided to host using simplified JSON based scheme
+         * @function vizrt.PayloadHosting#setModelInfo
+         * @param {vizrt.IModelInfo|null} modelInfo Information about the model expected by the
+         *     hosted HTML page or <code>null</code> to provide no such information.
+         */
+        PayloadHosting.prototype.setModelInfo = function (modelInfo) {
+            var modelDoc = modelInfo ? createModelXml(modelInfo) : undefined;
+            this._modelInfoXml = modelDoc ? ((new XMLSerializer).serializeToString(modelDoc)) : undefined;
+        };
+        /**
+         * Sets model information to be provided to host using full VDF model XML
+         * @function vizrt.PayloadHosting#setModelInfo
+         * @param {string|null} modelXml Information about the model expected by the
+         *     hosted HTML page or <code>null</code> to provide no such information.
+         */
+        PayloadHosting.prototype.setModelInfoXml = function (modelXml) {
+            this._modelInfoXml = modelXml || undefined;
+        };
+        /**
+         * Sets whether the HTML page (guest) wants to keep focus even though none of its inputs has focus.
+         * For guests controlling the focus, the host will typically visualize that it is disabled
+         * as long as the guest has focus.
+         * @param controlled `true` to keep focus in guest even if no inputs have focus, `false` otherwise.
+         */
+        PayloadHosting.prototype.setControlledFocus = function (controlled) {
+            this._controlledFocus = controlled;
+        };
+        /**
+         * Request the host to take focus back.
+         * Typically used when [setControlledFocus]{@link vizrt.PayloadHosting#setControlledFocus} has been called with `true`.
+         */
+        PayloadHosting.prototype.yieldFocus = function () {
+            if (!this._host)
+                return;
+            this._host.postMessage({
+                type: "focus_changed",
+                event: "yield_focus",
+                guestid: getGuestIdentifier()
+            }, getHostOrigin());
         };
         return PayloadHosting;
     }());
